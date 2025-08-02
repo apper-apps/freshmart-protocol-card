@@ -4,7 +4,7 @@ import L from 'leaflet';
 import { toast } from 'react-toastify';
 import { deliveryService } from '@/services/api/deliveryService';
 import ApperIcon from '@/components/ApperIcon';
-import Button from '@/atoms/Button';
+import Button from '@/components/atoms/Button';
 import Card from '@/atoms/Card';
 import Badge from '@/atoms/Badge';
 import Loading from '@/components/ui/Loading';
