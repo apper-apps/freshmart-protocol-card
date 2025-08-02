@@ -1,0 +1,212 @@
+[
+  {
+    "Id": 1,
+    "customerId": "cust_001",
+    "items": [
+      {
+        "Id": 1,
+        "title": "Fresh Tomatoes",
+        "price": 80,
+        "costPrice": 60,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=400&fit=crop",
+        "category": "Vegetables",
+        "vendorId": 1
+      },
+      {
+        "Id": 3,
+        "title": "Red Apples",
+        "price": 200,
+        "costPrice": 150,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop",
+        "category": "Fruits",
+        "vendorId": 2
+      }
+    ],
+    "status": "delivered",
+    "paymentMethod": "jazzcash",
+    "transactionId": "JC123456789",
+    "paymentProof": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=300&fit=crop",
+    "deliveryAddress": {
+      "fullName": "Ahmed Hassan",
+      "phone": "+92 300 1234567",
+      "address": "House 123, Street 5, Block A",
+      "city": "Lahore",
+      "area": "DHA Phase 5",
+      "landmarks": "Near McDonald's"
+    },
+    "subtotal": 360,
+    "deliveryFee": 0,
+    "tax": 18,
+    "total": 378,
+    "createdAt": "2024-01-20T10:30:00Z",
+    "updatedAt": "2024-01-22T14:45:00Z"
+  },
+  {
+    "Id": 2,
+    "customerId": "cust_002",
+    "items": [
+      {
+        "Id": 7,
+        "title": "Basmati Rice",
+        "price": 300,
+        "costPrice": 240,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
+        "category": "Grains",
+        "vendorId": 1
+      },
+      {
+        "Id": 4,
+        "title": "Fresh Milk",
+        "price": 150,
+        "costPrice": 120,
+        "quantity": 3,
+        "image": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop",
+        "category": "Dairy",
+        "vendorId": 3
+      }
+    ],
+    "status": "shipped",
+    "paymentMethod": "easypaisa",
+    "transactionId": "EP987654321",
+    "paymentProof": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=300&fit=crop",
+    "deliveryAddress": {
+      "fullName": "Fatima Ali",
+      "phone": "+92 301 9876543",
+      "address": "Flat 45, Building C, Gulberg",
+      "city": "Karachi",
+      "area": "Gulberg",
+      "landmarks": "Opposite to KFC"
+    },
+    "subtotal": 1050,
+    "deliveryFee": 0,
+    "tax": 53,
+    "total": 1103,
+    "createdAt": "2024-01-21T09:15:00Z",
+    "updatedAt": "2024-01-22T11:20:00Z"
+  },
+  {
+    "Id": 3,
+    "customerId": "cust_003",
+    "items": [
+      {
+        "Id": 5,
+        "title": "Chicken Breast",
+        "price": 450,
+        "costPrice": 350,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=400&fit=crop",
+        "category": "Meat",
+        "vendorId": 4
+      },
+      {
+        "Id": 2,
+        "title": "Organic Spinach",
+        "price": 120,
+        "costPrice": 90,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
+        "category": "Vegetables",
+        "vendorId": 1
+      }
+    ],
+    "status": "payment_verified",
+    "paymentMethod": "bank",
+    "transactionId": "BT456789123",
+    "paymentProof": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=300&fit=crop",
+    "deliveryAddress": {
+      "fullName": "Muhammad Usman",
+      "phone": "+92 302 5555444",
+      "address": "House 67, Main Boulevard",
+      "city": "Islamabad",
+      "area": "F-8",
+      "landmarks": "Near Centaurus Mall"
+    },
+    "subtotal": 690,
+    "deliveryFee": 150,
+    "tax": 35,
+    "total": 875,
+    "createdAt": "2024-01-22T14:20:00Z",
+    "updatedAt": "2024-01-22T15:30:00Z"
+  },
+  {
+    "Id": 4,
+    "customerId": "cust_004",
+    "items": [
+      {
+        "Id": 12,
+        "title": "Fresh Bananas",
+        "price": 90,
+        "costPrice": 70,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop",
+        "category": "Fruits",
+        "vendorId": 2
+      },
+      {
+        "Id": 10,
+        "title": "Hand Sanitizer",
+        "price": 120,
+        "costPrice": 90,
+        "quantity": 3,
+        "image": "https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&h=400&fit=crop",
+        "category": "Personal Care",
+        "vendorId": 8
+      }
+    ],
+    "status": "packed",
+    "paymentMethod": "jazzcash",
+    "transactionId": "JC555666777",
+    "paymentProof": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=300&fit=crop",
+    "deliveryAddress": {
+      "fullName": "Ayesha Khan",
+      "phone": "+92 303 7777888",
+      "address": "House 23, Garden Town",
+      "city": "Lahore",
+      "area": "Garden Town",
+      "landmarks": "Near Packages Mall"
+    },
+    "subtotal": 540,
+    "deliveryFee": 150,
+    "tax": 27,
+    "total": 717,
+    "createdAt": "2024-01-22T16:45:00Z",
+    "updatedAt": "2024-01-22T18:00:00Z"
+  },
+  {
+    "Id": 5,
+    "customerId": "cust_005",
+    "items": [
+      {
+        "Id": 8,
+        "title": "Mixed Nuts",
+        "price": 650,
+        "costPrice": 500,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=400&h=400&fit=crop",
+        "category": "Snacks",
+        "vendorId": 6
+      }
+    ],
+    "status": "pending",
+    "paymentMethod": "card",
+    "transactionId": "CC123789456",
+    "paymentProof": null,
+    "deliveryAddress": {
+      "fullName": "Ali Raza",
+      "phone": "+92 304 9999000",
+      "address": "Apartment 12, Tower B, Clifton",
+      "city": "Karachi",
+      "area": "Clifton",
+      "landmarks": "Near Dolmen Mall"
+    },
+    "subtotal": 650,
+    "deliveryFee": 150,
+    "tax": 33,
+    "total": 833,
+    "createdAt": "2024-01-22T19:30:00Z",
+    "updatedAt": "2024-01-22T19:30:00Z"
+  }
+]

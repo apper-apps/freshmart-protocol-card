@@ -1,0 +1,65 @@
+[
+  {
+    "Id": 1,
+    "name": "Vegetables",
+    "icon": "Carrot",
+    "description": "Fresh vegetables and greens",
+    "isActive": true
+  },
+  {
+    "Id": 2,
+    "name": "Fruits",
+    "icon": "Apple",
+    "description": "Seasonal fresh fruits",
+    "isActive": true
+  },
+  {
+    "Id": 3,
+    "name": "Dairy",
+    "icon": "Milk",
+    "description": "Milk, cheese, and dairy products",
+    "isActive": true
+  },
+  {
+    "Id": 4,
+    "name": "Meat",
+    "icon": "Beef",
+    "description": "Fresh meat and poultry",
+    "isActive": true
+  },
+  {
+    "Id": 5,
+    "name": "Beverages",
+    "icon": "Coffee",
+    "description": "Drinks and beverages",
+    "isActive": true
+  },
+  {
+    "Id": 6,
+    "name": "Grains",
+    "icon": "Wheat",
+    "description": "Rice, wheat, and cereals",
+    "isActive": true
+  },
+  {
+    "Id": 7,
+    "name": "Snacks",
+    "icon": "Cookie",
+    "description": "Snacks and treats",
+    "isActive": true
+  },
+  {
+    "Id": 8,
+    "name": "Household",
+    "icon": "Zap",
+    "description": "Cleaning and household items",
+    "isActive": true
+  },
+  {
+    "Id": 9,
+    "name": "Personal Care",
+    "icon": "Heart",
+    "description": "Personal hygiene products",
+    "isActive": true
+  }
+]

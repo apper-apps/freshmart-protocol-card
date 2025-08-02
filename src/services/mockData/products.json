@@ -1,0 +1,407 @@
+[
+  {
+    "Id": 1,
+    "title": "Fresh Tomatoes",
+    "description": "Premium quality fresh tomatoes, perfect for cooking and salads. Grown locally with no harmful pesticides.",
+    "category": "Vegetables",
+    "categoryId": 1,
+    "price": 80,
+    "originalPrice": 100,
+    "costPrice": 60,
+    "stock": 50,
+    "image": "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 1,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "size": "1kg", "name": "Regular Pack" },
+      { "size": "2kg", "name": "Family Pack" }
+    ],
+    "createdAt": "2024-01-15T10:30:00Z"
+  },
+  {
+    "Id": 2,
+    "title": "Organic Spinach",
+    "description": "Fresh organic spinach leaves, rich in iron and vitamins. Perfect for healthy meals and smoothies.",
+    "category": "Vegetables",
+    "categoryId": 1,
+    "price": 120,
+    "originalPrice": null,
+    "costPrice": 90,
+    "stock": 30,
+    "image": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 1,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": false,
+    "isNew": true,
+    "variants": [
+      { "weight": "250g", "name": "Small Bundle" },
+      { "weight": "500g", "name": "Large Bundle" }
+    ],
+    "createdAt": "2024-01-16T09:15:00Z"
+  },
+  {
+    "Id": 3,
+    "title": "Red Apples",
+    "description": "Crisp and sweet red apples. High in fiber and perfect for a healthy snack or baking.",
+    "category": "Fruits",
+    "categoryId": 2,
+    "price": 200,
+    "originalPrice": 250,
+    "costPrice": 150,
+    "stock": 75,
+    "image": "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1589217157232-464b505b197f?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 2,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "size": "1kg", "name": "Regular" },
+      { "size": "2kg", "name": "Family Pack" },
+      { "size": "5kg", "name": "Bulk Pack" }
+    ],
+    "createdAt": "2024-01-10T14:20:00Z"
+  },
+  {
+    "Id": 4,
+    "title": "Fresh Milk",
+    "description": "Pure and fresh cow milk. Rich in calcium and protein. Perfect for drinking and cooking.",
+    "category": "Dairy",
+    "categoryId": 3,
+    "price": 150,
+    "originalPrice": null,
+    "costPrice": 120,
+    "stock": 25,
+    "image": "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 3,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "size": "1L", "name": "Small Bottle" },
+      { "size": "2L", "name": "Large Bottle" }
+    ],
+    "createdAt": "2024-01-12T08:45:00Z"
+  },
+  {
+    "Id": 5,
+    "title": "Chicken Breast",
+    "description": "Fresh chicken breast, lean and protein-rich. Perfect for grilling, baking, or curry dishes.",
+    "category": "Meat",
+    "categoryId": 4,
+    "price": 450,
+    "originalPrice": 500,
+    "costPrice": 350,
+    "stock": 20,
+    "image": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 4,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": false,
+    "isNew": false,
+    "variants": [
+      { "weight": "500g", "name": "Small Pack" },
+      { "weight": "1kg", "name": "Regular Pack" }
+    ],
+    "createdAt": "2024-01-14T11:30:00Z"
+  },
+  {
+    "Id": 6,
+    "title": "Orange Juice",
+    "description": "Fresh squeezed orange juice with pulp. No added sugar or preservatives. Rich in Vitamin C.",
+    "category": "Beverages",
+    "categoryId": 5,
+    "price": 180,
+    "originalPrice": null,
+    "costPrice": 140,
+    "stock": 40,
+    "image": "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 5,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": false,
+    "isNew": true,
+    "variants": [
+      { "size": "500ml", "name": "Small Bottle" },
+      { "size": "1L", "name": "Large Bottle" }
+    ],
+    "createdAt": "2024-01-17T16:00:00Z"
+  },
+  {
+    "Id": 7,
+    "title": "Basmati Rice",
+    "description": "Premium quality basmati rice. Long grain, aromatic rice perfect for biryani and pulao dishes.",
+    "category": "Grains",
+    "categoryId": 6,
+    "price": 300,
+    "originalPrice": 350,
+    "costPrice": 240,
+    "stock": 100,
+    "image": "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 1,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "weight": "1kg", "name": "Small Bag" },
+      { "weight": "5kg", "name": "Family Bag" },
+      { "weight": "10kg", "name": "Bulk Bag" }
+    ],
+    "createdAt": "2024-01-05T12:15:00Z"
+  },
+  {
+    "Id": 8,
+    "title": "Mixed Nuts",
+    "description": "Premium mixed nuts including almonds, cashews, and walnuts. Perfect healthy snack option.",
+    "category": "Snacks",
+    "categoryId": 7,
+    "price": 650,
+    "originalPrice": 750,
+    "costPrice": 500,
+    "stock": 35,
+    "image": "https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 6,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": false,
+    "isNew": false,
+    "variants": [
+      { "weight": "250g", "name": "Small Pack" },
+      { "weight": "500g", "name": "Regular Pack" }
+    ],
+    "createdAt": "2024-01-08T15:45:00Z"
+  },
+  {
+    "Id": 9,
+    "title": "Dishwashing Liquid",
+    "description": "Effective dishwashing liquid that cuts through grease. Gentle on hands with pleasant fragrance.",
+    "category": "Household",
+    "categoryId": 8,
+    "price": 250,
+    "originalPrice": null,
+    "costPrice": 180,
+    "stock": 60,
+    "image": "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 7,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": false,
+    "isNew": false,
+    "variants": [
+      { "size": "500ml", "name": "Regular Size" },
+      { "size": "1L", "name": "Large Size" }
+    ],
+    "createdAt": "2024-01-11T13:20:00Z"
+  },
+  {
+    "Id": 10,
+    "title": "Hand Sanitizer",
+    "description": "Alcohol-based hand sanitizer with 70% alcohol content. Kills 99.9% germs and bacteria.",
+    "category": "Personal Care",
+    "categoryId": 9,
+    "price": 120,
+    "originalPrice": 150,
+    "costPrice": 90,
+    "stock": 80,
+    "image": "https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 8,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "size": "50ml", "name": "Pocket Size" },
+      { "size": "100ml", "name": "Regular Size" },
+      { "size": "500ml", "name": "Family Size" }
+    ],
+    "createdAt": "2024-01-09T10:00:00Z"
+  },
+  {
+    "Id": 11,
+    "title": "Green Bell Peppers",
+    "description": "Fresh and crunchy green bell peppers. Perfect for stir-fries, salads, and stuffed pepper recipes.",
+    "category": "Vegetables",
+    "categoryId": 1,
+    "price": 160,
+    "originalPrice": 180,
+    "costPrice": 120,
+    "stock": 45,
+    "image": "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 1,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": false,
+    "isNew": true,
+    "variants": [
+      { "weight": "500g", "name": "Small Pack" },
+      { "weight": "1kg", "name": "Regular Pack" }
+    ],
+    "createdAt": "2024-01-18T09:30:00Z"
+  },
+  {
+    "Id": 12,
+    "title": "Fresh Bananas",
+    "description": "Sweet and ripe bananas. Rich in potassium and perfect for smoothies, baking, or eating fresh.",
+    "category": "Fruits",
+    "categoryId": 2,
+    "price": 90,
+    "originalPrice": null,
+    "costPrice": 70,
+    "stock": 120,
+    "image": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 2,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "count": "6 pieces", "name": "Half Dozen" },
+      { "count": "12 pieces", "name": "One Dozen" }
+    ],
+    "createdAt": "2024-01-06T14:15:00Z"
+  },
+  {
+    "Id": 13,
+    "title": "Greek Yogurt",
+    "description": "Thick and creamy Greek yogurt. High in protein and probiotics. Perfect for breakfast or snacks.",
+    "category": "Dairy",
+    "categoryId": 3,
+    "price": 220,
+    "originalPrice": 250,
+    "costPrice": 180,
+    "stock": 30,
+    "image": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 3,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": false,
+    "isNew": true,
+    "variants": [
+      { "size": "200g", "name": "Individual Cup" },
+      { "size": "500g", "name": "Family Size" }
+    ],
+    "createdAt": "2024-01-19T11:45:00Z"
+  },
+  {
+    "Id": 14,
+    "title": "Ground Beef",
+    "description": "Fresh lean ground beef. Perfect for burgers, meatballs, and various Pakistani dishes.",
+    "category": "Meat",
+    "categoryId": 4,
+    "price": 800,
+    "originalPrice": 900,
+    "costPrice": 650,
+    "stock": 15,
+    "image": "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 4,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "weight": "500g", "name": "Small Pack" },
+      { "weight": "1kg", "name": "Regular Pack" }
+    ],
+    "createdAt": "2024-01-13T16:20:00Z"
+  },
+  {
+    "Id": 15,
+    "title": "Green Tea",
+    "description": "Premium green tea bags. Rich in antioxidants and perfect for a healthy lifestyle.",
+    "category": "Beverages",
+    "categoryId": 5,
+    "price": 350,
+    "originalPrice": null,
+    "costPrice": 280,
+    "stock": 55,
+    "image": "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 5,
+    "isActive": true,
+    "isFeatured": false,
+    "isBestseller": false,
+    "isNew": false,
+    "variants": [
+      { "count": "25 bags", "name": "Small Box" },
+      { "count": "50 bags", "name": "Large Box" }
+    ],
+    "createdAt": "2024-01-07T13:10:00Z"
+  },
+  {
+    "Id": 16,
+    "title": "Whole Wheat Flour",
+    "description": "Stone ground whole wheat flour. Perfect for making rotis, bread, and other baked goods.",
+    "category": "Grains",
+    "categoryId": 6,
+    "price": 180,
+    "originalPrice": 200,
+    "costPrice": 140,
+    "stock": 90,
+    "image": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=400&fit=crop",
+    "images": [
+      "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400&h=400&fit=crop"
+    ],
+    "vendorId": 1,
+    "isActive": true,
+    "isFeatured": true,
+    "isBestseller": true,
+    "isNew": false,
+    "variants": [
+      { "weight": "1kg", "name": "Small Bag" },
+      { "weight": "5kg", "name": "Family Bag" }
+    ],
+    "createdAt": "2024-01-04T10:25:00Z"
+  }
+]
