@@ -21,9 +21,12 @@ export const useCart = () => {
     localStorage.setItem("freshmart-cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product, quantity = 1) => {
+const addToCart = (product, quantity = 1) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.Id === product.Id);
+      const itemId = product.variantId || product.Id;
+      const existingItem = prevCart.find(item => 
+        (item.variantId || item.Id) === itemId
+      );
       
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantity;
@@ -32,9 +35,13 @@ export const useCart = () => {
           return prevCart;
         }
         
-        toast.success(`Updated ${product.title} quantity in cart`);
+        const variantText = product.selectedVariant 
+          ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
+          : '';
+        toast.success(`Updated ${product.title}${variantText} quantity in cart`);
+        
         return prevCart.map(item =>
-          item.Id === product.Id
+          (item.variantId || item.Id) === itemId
             ? { ...item, quantity: newQuantity }
             : item
         );
@@ -44,8 +51,17 @@ export const useCart = () => {
           return prevCart;
         }
         
-        toast.success(`${product.title} added to cart`);
-        return [...prevCart, { ...product, quantity }];
+        const variantText = product.selectedVariant 
+          ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
+          : '';
+        toast.success(`${product.title}${variantText} added to cart`);
+        
+        return [...prevCart, { 
+          ...product, 
+          quantity,
+          variantId: itemId,
+          displayName: `${product.title}${variantText}`
+        }];
       }
     });
   };
@@ -60,7 +76,7 @@ export const useCart = () => {
     });
   };
 
-  const updateQuantity = (productId, newQuantity) => {
+const updateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
@@ -68,7 +84,8 @@ export const useCart = () => {
 
     setCart(prevCart => {
       return prevCart.map(item => {
-        if (item.Id === productId) {
+        const itemId = item.variantId || item.Id;
+        if (itemId === productId) {
           if (newQuantity > item.stock) {
             toast.warning(`Only ${item.stock} items available in stock`);
             return item;
@@ -79,7 +96,6 @@ export const useCart = () => {
       });
     });
   };
-
   const clearCart = () => {
     setCart([]);
     toast.success("Cart cleared");
@@ -93,12 +109,12 @@ export const useCart = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  const isInCart = (productId) => {
-    return cart.some(item => item.Id === productId);
+const isInCart = (productId) => {
+    return cart.some(item => (item.variantId || item.Id) === productId);
   };
 
   const getCartItem = (productId) => {
-    return cart.find(item => item.Id === productId);
+    return cart.find(item => (item.variantId || item.Id) === productId);
   };
 
   return {
