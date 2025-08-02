@@ -6,7 +6,7 @@ import { deliveryService } from '@/services/api/deliveryService';
 import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
 import Card from '@/components/atoms/Card';
-import Badge from '@/atoms/Badge';
+import Badge from '@/components/atoms/Badge';
 import Loading from '@/components/ui/Loading';
 import Error from '@/components/ui/Error';
 import { cn } from '@/utils/cn';
