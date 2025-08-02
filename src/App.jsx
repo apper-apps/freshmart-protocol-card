@@ -12,11 +12,12 @@ import OrderDetail from "@/components/pages/OrderDetail";
 import Account from "@/components/pages/Account";
 import VendorDashboard from "@/components/pages/VendorDashboard";
 import AdminDashboard from "@/components/pages/AdminDashboard";
+import POSCheckout from "@/components/pages/POSCheckout";
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-surface-200">
+<div className="min-h-screen bg-surface-200">
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
@@ -30,6 +31,7 @@ function App() {
             <Route path="account" element={<Account />} />
             <Route path="vendor" element={<VendorDashboard />} />
             <Route path="admin" element={<AdminDashboard />} />
+            <Route path="pos" element={<POSCheckout />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
