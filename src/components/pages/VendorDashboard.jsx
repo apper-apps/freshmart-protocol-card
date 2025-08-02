@@ -2,19 +2,30 @@ import React, { useState, useEffect } from "react";
 import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
 import ApperIcon from "@/components/ApperIcon";
 import { vendorService } from "@/services/api/vendorService";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 
 const VendorDashboard = () => {
-  const [orders, setOrders] = useState([]);
+const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("orders");
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [deliveryPersonnel, setDeliveryPersonnel] = useState({
+    name: "",
+    phone: "",
+    vehicleNumber: "",
+    estimatedTime: ""
+  });
+  const [processingActions, setProcessingActions] = useState({});
 
   const loadData = async () => {
     try {
@@ -39,12 +50,68 @@ const VendorDashboard = () => {
     loadData();
   }, []);
 
+const handleConfirmAvailability = async (orderId, itemIndex, available) => {
+    setProcessingActions(prev => ({ ...prev, [`${orderId}-${itemIndex}`]: true }));
+    try {
+      await vendorService.confirmProductAvailability(orderId, itemIndex, available);
+      toast.success(`Product availability ${available ? 'confirmed' : 'updated'}`);
+      loadData();
+    } catch (err) {
+      toast.error("Failed to update product availability");
+    } finally {
+      setProcessingActions(prev => ({ ...prev, [`${orderId}-${itemIndex}`]: false }));
+    }
+  };
+
+  const handleMarkAsPacked = (orderId) => {
+    setSelectedOrderId(orderId);
+    setShowDeliveryModal(true);
+  };
+
+  const handleSubmitDeliveryDetails = async () => {
+    if (!deliveryPersonnel.name || !deliveryPersonnel.phone) {
+      toast.error("Please fill in delivery personnel name and phone");
+      return;
+    }
+
+    setProcessingActions(prev => ({ ...prev, [selectedOrderId]: true }));
+    try {
+      await vendorService.assignDeliveryPersonnel(selectedOrderId, deliveryPersonnel);
+      await vendorService.updateOrderStatus(selectedOrderId, "packed");
+      toast.success("Order marked as packed and delivery assigned");
+      setShowDeliveryModal(false);
+      setDeliveryPersonnel({ name: "", phone: "", vehicleNumber: "", estimatedTime: "" });
+      loadData();
+    } catch (err) {
+      toast.error("Failed to assign delivery personnel");
+    } finally {
+      setProcessingActions(prev => ({ ...prev, [selectedOrderId]: false }));
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId, status) => {
+    setProcessingActions(prev => ({ ...prev, [orderId]: true }));
     try {
       await vendorService.updateOrderStatus(orderId, status);
-      loadData(); // Refresh data
+      toast.success(`Order status updated to ${status.replace('_', ' ')}`);
+      loadData();
     } catch (err) {
-      setError("Failed to update order status.");
+      toast.error("Failed to update order status");
+    } finally {
+      setProcessingActions(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handleRequestPayment = async (orderId) => {
+    setProcessingActions(prev => ({ ...prev, [`payment-${orderId}`]: true }));
+    try {
+      await vendorService.requestPayment(orderId);
+      toast.success("Payment request sent to admin");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to send payment request");
+    } finally {
+      setProcessingActions(prev => ({ ...prev, [`payment-${orderId}`]: false }));
     }
   };
 
@@ -237,38 +304,68 @@ const VendorDashboard = () => {
                   </div>
                 </div>
 
-                {/* Order Items */}
-                <div className="space-y-2 mb-4">
+{/* Order Items with Availability */}
+                <div className="space-y-3 mb-4">
                   {order.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b border-surface-200 last:border-0">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={item.image}
-                          alt={item.title}
-                          className="w-10 h-10 rounded object-cover"
-                        />
-                        <div>
-                          <p className="font-medium text-gray-900">{item.title}</p>
-                          <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                    <div key={index} className="bg-white rounded-lg p-4 border border-surface-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-12 h-12 rounded object-cover"
+                          />
+                          <div>
+                            <p className="font-medium text-gray-900">{item.title}</p>
+                            <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant={item.available !== false ? "success" : "error"} size="sm">
+                                {item.available !== false ? "Available" : "Out of Stock"}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">RS {item.price.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600">Cost: RS {item.costPrice?.toLocaleString() || "N/A"}</p>
+                        <div className="text-right">
+                          <p className="font-medium">RS {item.price.toLocaleString()}</p>
+                          <p className="text-sm text-gray-600">Cost: RS {item.costPrice?.toLocaleString() || "N/A"}</p>
+                          {order.status === "payment_verified" && (
+                            <div className="flex gap-1 mt-2">
+                              <Button
+                                size="sm"
+                                variant={item.available !== false ? "success" : "outline"}
+                                onClick={() => handleConfirmAvailability(order.Id, index, true)}
+                                disabled={processingActions[`${order.Id}-${index}`]}
+                              >
+                                <ApperIcon name="Check" size={12} className="mr-1" />
+                                Available
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={item.available === false ? "error" : "outline"}
+                                onClick={() => handleConfirmAvailability(order.Id, index, false)}
+                                disabled={processingActions[`${order.Id}-${index}`]}
+                              >
+                                <ApperIcon name="X" size={12} className="mr-1" />
+                                Out
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  {order.status === "payment_verified" && (
+{/* Actions */}
+                <div className="flex flex-wrap gap-2">
+                  {order.status === "payment_verified" && order.items.every(item => item.available !== false) && (
                     <Button
-                      onClick={() => handleUpdateOrderStatus(order.Id, "packed")}
+                      onClick={() => handleMarkAsPacked(order.Id)}
                       size="sm"
+                      disabled={processingActions[order.Id]}
                     >
                       <ApperIcon name="Package" size={16} className="mr-2" />
-                      Mark as Packed
+                      {processingActions[order.Id] ? "Processing..." : "Pack & Assign Delivery"}
                     </Button>
                   )}
                   {order.status === "packed" && (
@@ -276,10 +373,28 @@ const VendorDashboard = () => {
                       onClick={() => handleUpdateOrderStatus(order.Id, "shipped")}
                       variant="accent"
                       size="sm"
+                      disabled={processingActions[order.Id]}
                     >
                       <ApperIcon name="Truck" size={16} className="mr-2" />
-                      Mark as Shipped
+                      {processingActions[order.Id] ? "Processing..." : "Mark as Shipped"}
                     </Button>
+                  )}
+                  {(order.status === "delivered" || order.status === "shipped") && !order.paymentRequested && (
+                    <Button
+                      onClick={() => handleRequestPayment(order.Id)}
+                      variant="primary"
+                      size="sm"
+                      disabled={processingActions[`payment-${order.Id}`]}
+                    >
+                      <ApperIcon name="DollarSign" size={16} className="mr-2" />
+                      {processingActions[`payment-${order.Id}`] ? "Sending..." : "Request Payment"}
+                    </Button>
+                  )}
+                  {order.paymentRequested && (
+                    <Badge variant="warning" size="sm">
+                      <ApperIcon name="Clock" size={12} className="mr-1" />
+                      Payment Requested
+                    </Badge>
                   )}
                   <Button variant="outline" size="sm">
                     <ApperIcon name="Eye" size={16} className="mr-2" />
@@ -361,6 +476,93 @@ const VendorDashboard = () => {
               ))}
             </div>
           )}
+        </div>
+)}
+
+      {/* Delivery Personnel Modal */}
+      {showDeliveryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Assign Delivery Personnel
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeliveryModal(false)}
+                >
+                  <ApperIcon name="X" size={20} />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Driver Name *
+                  </label>
+                  <Input
+                    value={deliveryPersonnel.name}
+                    onChange={(e) => setDeliveryPersonnel(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter driver name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number *
+                  </label>
+                  <Input
+                    value={deliveryPersonnel.phone}
+                    onChange={(e) => setDeliveryPersonnel(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="Enter phone number"
+                    type="tel"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vehicle Number
+                  </label>
+                  <Input
+                    value={deliveryPersonnel.vehicleNumber}
+                    onChange={(e) => setDeliveryPersonnel(prev => ({ ...prev, vehicleNumber: e.target.value }))}
+                    placeholder="Enter vehicle number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Estimated Delivery Time
+                  </label>
+                  <Input
+                    value={deliveryPersonnel.estimatedTime}
+                    onChange={(e) => setDeliveryPersonnel(prev => ({ ...prev, estimatedTime: e.target.value }))}
+                    placeholder="e.g., 2-3 hours"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeliveryModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitDeliveryDetails}
+                  disabled={processingActions[selectedOrderId]}
+                  className="flex-1"
+                >
+                  <ApperIcon name="Truck" size={16} className="mr-2" />
+                  {processingActions[selectedOrderId] ? "Assigning..." : "Assign & Pack"}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,5 +1,8 @@
 import orderData from "@/services/mockData/orders.json";
 import productData from "@/services/mockData/products.json";
+import { toast } from "react-toastify";
+import React from "react";
+import Error from "@/components/ui/Error";
 
 // Simulate network delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -27,13 +30,77 @@ export const vendorService = {
       throw new Error("Order not found");
     }
     
-    const updatedOrder = {
+const updatedOrder = {
       ...orderData[index],
       status,
       updatedAt: new Date().toISOString()
     };
     
     return { ...updatedOrder };
+  },
+
+  async confirmProductAvailability(orderId, itemIndex, available) {
+    await delay(300);
+    const orderIndex = orderData.findIndex(o => o.Id === orderId);
+    if (orderIndex === -1) {
+      throw new Error("Order not found");
+    }
+    
+    const order = orderData[orderIndex];
+    if (itemIndex >= order.items.length) {
+      throw new Error("Item not found");
+    }
+    
+    // Update the item availability
+    order.items[itemIndex].available = available;
+    order.updatedAt = new Date().toISOString();
+    
+    return { success: true };
+  },
+
+  async assignDeliveryPersonnel(orderId, deliveryInfo) {
+    await delay(400);
+    const orderIndex = orderData.findIndex(o => o.Id === orderId);
+    if (orderIndex === -1) {
+      throw new Error("Order not found");
+    }
+    
+    const updatedOrder = {
+      ...orderData[orderIndex],
+      deliveryPersonnel: {
+        name: deliveryInfo.name,
+        phone: deliveryInfo.phone,
+        vehicleNumber: deliveryInfo.vehicleNumber || null,
+        estimatedTime: deliveryInfo.estimatedTime || null,
+        assignedAt: new Date().toISOString()
+      },
+      updatedAt: new Date().toISOString()
+    };
+    
+    orderData[orderIndex] = updatedOrder;
+    return { ...updatedOrder };
+  },
+
+  async requestPayment(orderId) {
+    await delay(500);
+    const orderIndex = orderData.findIndex(o => o.Id === orderId);
+    if (orderIndex === -1) {
+      throw new Error("Order not found");
+    }
+    
+    const updatedOrder = {
+      ...orderData[orderIndex],
+      paymentRequested: true,
+      paymentRequestDate: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    orderData[orderIndex] = updatedOrder;
+    
+    // Simulate admin notification
+    console.log("Payment request sent to admin for order:", orderId);
+    
+    return { success: true, message: "Payment request sent successfully" };
   },
 
   async updateProductStatus(productId, isActive) {
@@ -66,6 +133,6 @@ export const vendorService = {
       priceUpdatePending: true
     };
     
-    return { ...updatedProduct };
+return { ...updatedProduct };
   }
 };
