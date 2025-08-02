@@ -13,12 +13,12 @@ import Account from "@/components/pages/Account";
 import VendorDashboard from "@/components/pages/VendorDashboard";
 import AdminDashboard from "@/components/pages/AdminDashboard";
 import POSCheckout from "@/components/pages/POSCheckout";
-
+import DeliveryApp from "@/components/pages/DeliveryApp";
 function App() {
   return (
     <BrowserRouter>
 <div className="min-h-screen bg-surface-200">
-        <Routes>
+<Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="categories" element={<Categories />} />
@@ -32,6 +32,7 @@ function App() {
             <Route path="vendor" element={<VendorDashboard />} />
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="pos" element={<POSCheckout />} />
+            <Route path="delivery" element={<DeliveryApp />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

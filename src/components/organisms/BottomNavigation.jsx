@@ -15,6 +15,7 @@ const navItems = [
     { path: "/categories", label: "Categories", icon: "Grid3X3" },
     { path: "/cart", label: "Cart", icon: "ShoppingCart", badge: totalItems },
     { path: "/pos", label: "POS", icon: "Scan" },
+    { path: "/delivery", label: "Delivery", icon: "Truck" },
     { path: "/orders", label: "Orders", icon: "Package" },
     { path: "/account", label: "Account", icon: "User" }
   ];
