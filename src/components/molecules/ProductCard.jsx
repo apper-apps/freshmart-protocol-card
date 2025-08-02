@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import ApperIcon from "@/components/ApperIcon";
 import { useCart } from "@/hooks/useCart";
+import ApperIcon from "@/components/ApperIcon";
+import Cart from "@/components/pages/Cart";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
@@ -15,12 +16,29 @@ const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
+  // Memoize variant ID to prevent render-phase recalculations
+  const variantId = useMemo(() => {
+    return selectedVariant ? `${product.Id}-${JSON.stringify(selectedVariant)}` : product.Id;
+  }, [product.Id, selectedVariant]);
+
+  // Memoize discount calculation
+  const discountPercentage = useMemo(() => {
+    return product.originalPrice 
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0;
+  }, [product.originalPrice, product.price]);
+
+  // Memoize cart status to prevent render-phase state queries
+  const isProductInCart = useMemo(() => {
+    return isInCart(variantId);
+  }, [isInCart, variantId]);
+
   const handleAddToCart = (e) => {
     e.stopPropagation();
     const productToAdd = {
       ...product,
       selectedVariant,
-      variantId: selectedVariant ? `${product.Id}-${JSON.stringify(selectedVariant)}` : product.Id
+      variantId
     };
     addToCart(productToAdd, quantity);
   };
@@ -33,14 +51,6 @@ const ProductCard = ({ product }) => {
     e.stopPropagation();
     setSelectedVariant(variant);
   };
-
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
-
-  const isProductInCart = selectedVariant 
-    ? isInCart(`${product.Id}-${JSON.stringify(selectedVariant)}`)
-    : isInCart(product.Id);
   return (
 <Card 
       hover 

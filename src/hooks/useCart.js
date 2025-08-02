@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-
 export const useCart = () => {
   const [cart, setCart] = useState([]);
 
@@ -109,13 +108,13 @@ const updateQuantity = (productId, newQuantity) => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-const isInCart = (productId) => {
+const isInCart = useCallback((productId) => {
     return cart.some(item => (item.variantId || item.Id) === productId);
-  };
+  }, [cart]);
 
-  const getCartItem = (productId) => {
+  const getCartItem = useCallback((productId) => {
     return cart.find(item => (item.variantId || item.Id) === productId);
-  };
+  }, [cart]);
 
   return {
     cart,
