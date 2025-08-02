@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { deliveryService } from '@/services/api/deliveryService';
 import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
-import Card from '@/atoms/Card';
+import Card from '@/components/atoms/Card';
 import Badge from '@/atoms/Badge';
 import Loading from '@/components/ui/Loading';
 import Error from '@/components/ui/Error';
