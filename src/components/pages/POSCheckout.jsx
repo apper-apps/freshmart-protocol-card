@@ -32,21 +32,38 @@ const POSCheckout = () => {
     loadProducts();
   }, []);
 
-  const loadProducts = async () => {
+const loadProducts = async () => {
+    // Prevent multiple simultaneous calls
+    if (loading) return;
+    
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
+      
       const data = await productService.getAll();
-      setProducts(data);
+      
+      // Only update state if component is still mounted and data is valid
+      if (data && Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        throw new Error('Invalid product data received');
+      }
     } catch (err) {
-      setError(err.message);
-      toast.error('Failed to load products');
+      // Only set error state if component is still mounted
+      const errorMessage = err?.message || 'Failed to load products';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      
+      // Fallback to empty array to prevent UI breaks
+      setProducts([]);
     } finally {
+      // Always reset loading state
       setLoading(false);
     }
   };
 
   // Barcode Scanner Functions
-const startScanner = async () => {
+  const startScanner = async () => {
     try {
       // Check if mediaDevices is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
