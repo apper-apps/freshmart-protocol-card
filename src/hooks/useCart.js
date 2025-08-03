@@ -326,7 +326,6 @@ const targetItem = prevCart.find(item => (item.variantId || item.Id) === product
           return prevCart;
         }
 
-        const maxStock = targetItem.stock || 99;
 const maxStock = targetItem.stock || 99;
         
         // Stock validation with user feedback
