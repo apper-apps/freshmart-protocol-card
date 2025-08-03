@@ -80,7 +80,7 @@ const orderService = {
   },
 
   // Create new order with cart validation
-  create: async (orderData) => {
+create: async (orderData) => {
     await delay(500);
     
     if (!orderData || typeof orderData !== 'object') {
@@ -94,16 +94,48 @@ const orderService = {
       throw new Error(`Cart validation failed: ${error.message}`);
     }
 
+    // Validate payment information
+    if (!orderData.paymentMethod) {
+      throw new Error('Payment method is required');
+    }
+
+    if (!orderData.transactionId && orderData.paymentMethod !== 'cod') {
+      throw new Error('Transaction ID is required for online payments');
+    }
+
+    // Determine initial order status based on payment
+    let initialStatus = 'pending';
+    if (orderData.paymentStatus === 'completed') {
+      initialStatus = 'confirmed';
+    } else if (orderData.paymentMethod === 'cod') {
+      initialStatus = 'pending';
+    } else if (orderData.transactionId) {
+      initialStatus = 'payment_pending';
+    }
+
     const newOrder = {
       Id: nextId++,
       ...orderData,
-      status: 'pending',
+      status: initialStatus,
       orderDate: new Date().toISOString(),
       estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      trackingNumber: `FM${Date.now()}${Math.floor(Math.random() * 1000)}`
+      trackingNumber: `FM${Date.now()}${Math.floor(Math.random() * 1000)}`,
+      paymentHistory: [{
+        timestamp: new Date().toISOString(),
+        status: orderData.paymentStatus || 'pending',
+        transactionId: orderData.transactionId,
+        gateway: orderData.paymentGateway,
+        amount: orderData.total
+      }],
+      processingDetails: {
+        source: orderData.orderSource || 'web_app',
+        processingTime: orderData.processingTimestamp,
+        ipAddress: '127.0.0.1', // Mock IP for demo
+        userAgent: 'FreshMart Web App'
+      }
     };
 
-orders.push(newOrder);
+    orders.push(newOrder);
     return { ...newOrder };
   },
 

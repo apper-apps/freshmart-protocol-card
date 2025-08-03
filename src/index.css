@@ -328,3 +328,90 @@ background-color: rgba(255, 255, 255, 0.8) !important;
 .hover\:scale-110:hover {
   transform: scale(1.10);
 }
+
+/* Payment Processing Animations */
+.payment-processing {
+  animation: paymentPulse 2s ease-in-out infinite;
+}
+
+@keyframes paymentPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(46, 125, 50, 0.1);
+  }
+}
+
+.payment-success {
+  animation: paymentSuccess 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes paymentSuccess {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-10deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.payment-loading {
+  animation: paymentSpin 1.5s linear infinite;
+}
+
+@keyframes paymentSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.payment-method-selected {
+  animation: methodSelect 0.4s ease-out;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
+}
+
+@keyframes methodSelect {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.3);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 6px rgba(46, 125, 50, 0.2);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.3);
+  }
+}
+
+.transaction-verified {
+  animation: verificationSuccess 0.6s ease-out;
+}
+
+@keyframes verificationSuccess {
+  0% {
+    background-color: rgba(76, 175, 80, 0);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(76, 175, 80, 0.1);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgba(76, 175, 80, 0.05);
+    transform: scale(1);
+  }
+}
