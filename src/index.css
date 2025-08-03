@@ -1,7 +1,6 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
-@import 'react-toastify/dist/ReactToastify.css';
 
 * {
   box-sizing: border-box;
@@ -33,31 +32,39 @@ body {
   background: #1B5E20;
 }
 
-/* Toast customization */
-.Toastify__toast-container {
-  z-index: 9999;
+/* React Hot Toast customization */
+[data-sonner-toaster] {
+  z-index: 9999 !important;
 }
 
-.Toastify__toast {
-  font-family: 'Inter', sans-serif;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+[data-sonner-toast] {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-.Toastify__toast--success {
-  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+[data-sonner-toast][data-type="success"] {
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
-.Toastify__toast--error {
-  background: linear-gradient(135deg, #F44336 0%, #EF5350 100%);
+[data-sonner-toast][data-type="error"] {
+  background: linear-gradient(135deg, #F44336 0%, #EF5350 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
-.Toastify__toast--warning {
-  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+[data-sonner-toast][data-type="warning"] {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
-.Toastify__toast--info {
-  background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%);
+[data-sonner-toast][data-type="info"] {
+  background: linear-gradient(135deg, #2196F3 0%, #42A5F5 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
 /* Custom utilities */
