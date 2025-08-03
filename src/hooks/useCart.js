@@ -79,7 +79,11 @@ const addToCart = useCallback((product, quantity = 1) => {
         
         return prevCart.map(item =>
           (item.variantId || item.Id) === itemId
-            ? { ...item, quantity: newQuantity }
+            ? { 
+                ...item, 
+                quantity: newQuantity,
+                price: product.price // Update price in case variant changed
+              }
             : item
         );
       } else {
@@ -94,7 +98,9 @@ const addToCart = useCallback((product, quantity = 1) => {
           ...product, 
           quantity,
           variantId: itemId,
-          displayName: `${product.title}${variantText}`
+          displayName: `${product.title}${variantText}`,
+          // Ensure price is correctly set for variant
+          price: product.price
         }];
       }
     });
@@ -139,8 +145,12 @@ const clearCart = useCallback(() => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const getSubtotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+const getSubtotal = () => {
+    return cart.reduce((total, item) => {
+      // Use the stored price which includes variant modifications
+      const itemPrice = item.price || 0;
+      return total + (itemPrice * item.quantity);
+    }, 0);
   };
 
 const isInCart = useCallback((productId) => {

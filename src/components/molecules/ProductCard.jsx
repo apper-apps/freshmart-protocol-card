@@ -17,16 +17,29 @@ const ProductCard = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
 
   // Memoize variant ID to prevent render-phase recalculations
-  const variantId = useMemo(() => {
+const variantId = useMemo(() => {
     return selectedVariant ? `${product.Id}-${JSON.stringify(selectedVariant)}` : product.Id;
   }, [product.Id, selectedVariant]);
 
-  // Memoize discount calculation
+  // Calculate current price with variant modifier
+  const currentPrice = useMemo(() => {
+    let basePrice = product.price;
+    if (selectedVariant && selectedVariant.priceModifier) {
+      basePrice += selectedVariant.priceModifier;
+    }
+    return basePrice;
+  }, [product.price, selectedVariant]);
+
+  // Memoize discount calculation with current price
   const discountPercentage = useMemo(() => {
     return product.originalPrice 
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      ? Math.round(((product.originalPrice - currentPrice) / product.originalPrice) * 100)
       : 0;
-  }, [product.originalPrice, product.price]);
+  }, [product.originalPrice, currentPrice]);
+
+  const savings = useMemo(() => {
+    return product.originalPrice > currentPrice ? product.originalPrice - currentPrice : 0;
+  }, [product.originalPrice, currentPrice]);
 
   // Memoize cart status to prevent render-phase state queries
   const isProductInCart = useMemo(() => {
@@ -34,11 +47,12 @@ const ProductCard = ({ product }) => {
   }, [isInCart, variantId]);
 
   const handleAddToCart = (e) => {
-    e.stopPropagation();
+e.stopPropagation();
     const productToAdd = {
       ...product,
       selectedVariant,
-      variantId
+      variantId,
+      price: currentPrice // Use current price with variant modifier
     };
     addToCart(productToAdd, quantity);
   };
@@ -138,7 +152,7 @@ const ProductCard = ({ product }) => {
         </p>
 
         {/* Variants */}
-        {product.variants && product.variants.length > 0 && (
+{product.variants && product.variants.length > 0 && (
           <div className="mb-3">
             <p className="text-xs text-gray-500 mb-2">Available variants:</p>
             <div className="flex flex-wrap gap-1">
@@ -146,13 +160,23 @@ const ProductCard = ({ product }) => {
                 <button
                   key={index}
                   onClick={(e) => handleVariantChange(e, variant)}
-                  className={`px-2 py-1 text-xs rounded border transition-colors ${
+                  className={`px-2 py-1 text-xs rounded border transition-all duration-200 variant-button ${
                     selectedVariant === variant
-                      ? 'bg-primary-100 border-primary-300 text-primary-700'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                      ? 'bg-primary-100 border-primary-400 text-primary-700 ring-1 ring-primary-300 transform scale-105 shadow-sm'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600'
                   }`}
                 >
-                  {variant.size || variant.weight || variant.color || variant.count || variant.name}
+                  <div className="flex items-center gap-1">
+                    {variant.size || variant.weight || variant.color || variant.count || variant.name}
+                    {selectedVariant === variant && (
+                      <ApperIcon name="Check" size={10} className="text-primary-600" />
+                    )}
+                  </div>
+                  {variant.priceModifier && variant.priceModifier !== 0 && (
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      ({variant.priceModifier > 0 ? '+' : ''}RS {Math.abs(variant.priceModifier)})
+                    </div>
+                  )}
                 </button>
               ))}
               {product.variants.length > 3 && (
@@ -164,24 +188,24 @@ const ProductCard = ({ product }) => {
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl font-bold gradient-text">
-            RS {product.price.toLocaleString()}
+<div className="flex items-center gap-2 mb-4">
+          <span className="text-xl font-bold gradient-text transition-all duration-300">
+            RS {currentPrice.toLocaleString()}
           </span>
-          {product.originalPrice && (
+          {product.originalPrice && product.originalPrice > currentPrice && (
             <span className="text-sm text-gray-500 line-through">
               RS {product.originalPrice.toLocaleString()}
             </span>
           )}
-          {discountPercentage > 0 && (
-            <span className="text-xs text-green-600 font-medium">
-              Save RS {(product.originalPrice - product.price).toLocaleString()}
+          {savings > 0 && (
+            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full animate-scale-in">
+              Save RS {savings.toLocaleString()}
             </span>
           )}
         </div>
 
 {/* Quantity selector for variants */}
-        {selectedVariant && (
+{selectedVariant && (
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm text-gray-600">Qty:</span>
             <div className="flex items-center gap-1">
@@ -190,23 +214,36 @@ const ProductCard = ({ product }) => {
                   e.stopPropagation();
                   setQuantity(Math.max(1, quantity - 1));
                 }}
-                className="w-6 h-6 flex items-center justify-center border rounded text-xs hover:bg-gray-50"
+                className={`w-6 h-6 flex items-center justify-center border rounded text-xs transition-all duration-200 ${
+                  quantity <= 1 
+                    ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95'
+                }`}
                 disabled={quantity <= 1}
               >
-                -
+                <ApperIcon name="Minus" size={12} />
               </button>
-              <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+              <span className="w-8 text-center text-sm font-medium bg-surface-50 rounded px-1">
+                {quantity}
+              </span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setQuantity(Math.min(product.stock, quantity + 1));
                 }}
-                className="w-6 h-6 flex items-center justify-center border rounded text-xs hover:bg-gray-50"
+                className={`w-6 h-6 flex items-center justify-center border rounded text-xs transition-all duration-200 ${
+                  quantity >= product.stock 
+                    ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95'
+                }`}
                 disabled={quantity >= product.stock}
               >
-                +
+                <ApperIcon name="Plus" size={12} />
               </button>
             </div>
+            <span className="text-xs text-gray-500">
+              (Stock: {product.stock})
+            </span>
           </div>
         )}
 

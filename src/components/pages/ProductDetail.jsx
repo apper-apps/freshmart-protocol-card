@@ -1,25 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import Button from "@/components/atoms/Button";
-import Badge from "@/components/atoms/Badge";
-import Card from "@/components/atoms/Card";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { productService } from "@/services/api/productService";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import Error from "@/components/ui/Error";
+import Cart from "@/components/pages/Cart";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { addToCart, isInCart } = useCart();
   
-  const [product, setProduct] = useState(null);
+const [product, setProduct] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const [priceAnimation, setPriceAnimation] = useState(false);
   const loadProduct = async () => {
     try {
       setLoading(true);
@@ -70,11 +71,33 @@ const ProductDetail = () => {
     );
   }
 
-  const discountPercentage = product.originalPrice 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+// Calculate current price based on selected variant
+  const getVariantPrice = () => {
+    if (!product) return 0;
+    
+    let basePrice = product.price;
+    if (selectedVariant && selectedVariant.priceModifier) {
+      basePrice += selectedVariant.priceModifier;
+    }
+    return basePrice;
+};
+
+  const currentPrice = getVariantPrice();
+  const originalPrice = product?.originalPrice || 0;
+  const discountPercentage = originalPrice
+    ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
     : 0;
 
-  return (
+  // Handle variant selection with price animation
+  const handleVariantSelect = (variant) => {
+    setSelectedVariant(variant);
+    setPriceAnimation(true);
+    setTimeout(() => setPriceAnimation(false), 300);
+  };
+
+  const savings = originalPrice > currentPrice ? originalPrice - currentPrice : 0;
+
+return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       {/* Back Button */}
       <Button
@@ -145,13 +168,27 @@ const ProductDetail = () => {
             </h1>
             
             <div className="flex items-center gap-4 mb-4">
-              <span className="text-3xl font-bold gradient-text">
-                RS {product.price.toLocaleString()}
-              </span>
-              {product.originalPrice && (
-                <span className="text-xl text-gray-500 line-through">
-                  RS {product.originalPrice.toLocaleString()}
+<div className="flex items-center gap-3 mb-2">
+                <span className={`text-3xl font-bold gradient-text transition-all duration-300 ${
+                  priceAnimation ? 'animate-bounce-subtle scale-110' : ''
+                }`}>
+                  RS {currentPrice.toLocaleString()}
                 </span>
+                {originalPrice > currentPrice && (
+                  <span className="text-xl text-gray-500 line-through">
+                    RS {originalPrice.toLocaleString()}
+                  </span>
+                )}
+              </div>
+              {savings > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <ApperIcon name="TrendingDown" size={16} />
+                    <span className="text-sm font-semibold">
+                      Save RS {savings.toLocaleString()} ({discountPercentage}% OFF)
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -167,7 +204,7 @@ const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Variants */}
+{/* Variants */}
           {product.variants && product.variants.length > 0 && (
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">
@@ -179,12 +216,30 @@ const ProductDetail = () => {
                     key={index}
                     variant={selectedVariant === variant ? "primary" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedVariant(variant)}
+                    onClick={() => handleVariantSelect(variant)}
+                    className={`variant-button relative transition-all duration-200 ${
+                      selectedVariant === variant 
+                        ? 'ring-2 ring-primary-400 ring-offset-2 border-primary-500 bg-primary-500 text-white shadow-lg transform scale-105' 
+                        : 'hover:border-primary-400 hover:text-primary-600'
+                    }`}
                   >
                     {variant.size || variant.weight || variant.color || variant.name}
+                    {selectedVariant === variant && (
+                      <ApperIcon name="Check" size={14} className="ml-1 animate-scale-in" />
+                    )}
+                    {variant.priceModifier && variant.priceModifier !== 0 && (
+                      <span className="text-xs ml-1">
+                        ({variant.priceModifier > 0 ? '+' : ''}RS {variant.priceModifier})
+                      </span>
+                    )}
                   </Button>
                 ))}
               </div>
+              {selectedVariant && selectedVariant.description && (
+                <p className="text-sm text-gray-600 mt-2">
+                  {selectedVariant.description}
+                </p>
+              )}
             </div>
           )}
 
