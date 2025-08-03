@@ -254,16 +254,37 @@ const processPayment = async () => {
 
         const paymentResult = await window.Apper.processPayment(paymentConfig);
         
-        if (paymentResult.success && paymentResult.transactionId) {
+// Enhanced transaction ID validation and processing
+        let finalTransactionId = paymentResult.transactionId;
+        
+        // Clean and validate existing transaction ID
+        if (finalTransactionId && typeof finalTransactionId === 'string') {
+          finalTransactionId = finalTransactionId.trim();
+          if (finalTransactionId.length === 0) {
+            finalTransactionId = null;
+          }
+        }
+        
+        if (paymentResult.success && finalTransactionId) {
           setPayment(prev => ({
             ...prev,
-            transactionId: paymentResult.transactionId,
-            status: paymentResult.status
+            transactionId: finalTransactionId,
+            status: paymentResult.status || 'completed'
           }));
-          return paymentResult;
-        } else if (paymentResult.success && !paymentResult.transactionId) {
-          // Generate fallback transaction ID for successful payments without ID
-          const fallbackTransactionId = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          return {
+            ...paymentResult,
+            transactionId: finalTransactionId
+          };
+        } else if (paymentResult.success && !finalTransactionId) {
+          // Generate robust fallback transaction ID for successful payments without ID
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substr(2, 12);
+          const gatewayPrefix = selectedPaymentMethod?.gateway ? 
+            selectedPaymentMethod.gateway.toUpperCase().substr(0, 3) : 'APP';
+          const fallbackTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
+          
+          console.log('Generated fallback transaction ID for successful payment:', fallbackTransactionId);
+          
           setPayment(prev => ({
             ...prev,
             transactionId: fallbackTransactionId,
@@ -271,7 +292,8 @@ const processPayment = async () => {
           }));
           return {
             ...paymentResult,
-            transactionId: fallbackTransactionId
+            transactionId: fallbackTransactionId,
+            status: paymentResult.status || 'completed'
           };
         } else {
           throw new Error(paymentResult.error || 'Payment processing failed');
