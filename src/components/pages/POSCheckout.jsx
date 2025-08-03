@@ -194,11 +194,12 @@ const loadProducts = async () => {
     return null;
   };
 
-  const handleBarcodeDetected = async (detectedBarcode) => {
+const handleBarcodeDetected = async (detectedBarcode) => {
     try {
       setIsScanning(true);
       const product = await productService.getByBarcode(detectedBarcode);
-      addToCart(product);
+      // Defer addToCart to prevent setState-in-render warning
+      setTimeout(() => addToCart(product), 0);
       stopScanner();
       setBarcode('');
     } catch (err) {
@@ -211,12 +212,13 @@ const loadProducts = async () => {
   // Manual barcode input
   const handleBarcodeSubmit = async (e) => {
     e.preventDefault();
-    if (!barcode.trim()) return;
+    
     
     try {
       setIsScanning(true);
       const product = await productService.getByBarcode(barcode);
-      addToCart(product);
+      // Defer addToCart to prevent setState-in-render warning
+      setTimeout(() => addToCart(product), 0);
       setBarcode('');
     } catch (err) {
       toast.error('Product not found for barcode: ' + barcode);
