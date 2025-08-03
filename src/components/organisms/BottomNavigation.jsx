@@ -7,7 +7,7 @@ import { useCart } from "@/hooks/useCart";
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { getTotalItems } = useCart();
+const { getTotalItems } = useCart();
   const totalItems = getTotalItems();
 
 const navItems = [

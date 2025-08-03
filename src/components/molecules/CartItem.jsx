@@ -55,7 +55,7 @@ const handleRemoveItem = async () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity - 1)}
-                            className={`quantity-btn w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity <= 1 || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600 hover:scale-105"}`}
+                            className={`quantity-btn decrease w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity <= 1 || loading ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600 hover:scale-105 active:scale-95"}`}
                             disabled={item.quantity <= 1 || loading}
                             data-item-id={item.variantId || item.Id}>
                             {loading ? (
@@ -64,18 +64,18 @@ const handleRemoveItem = async () => {
                                 <ApperIcon name="Minus" size={14} />
                             )}
                         </Button>
-                        <span className="w-10 text-center font-medium bg-surface-50 rounded px-2 py-1 cart-bounce">
+<span className="w-10 text-center font-medium bg-surface-50 rounded px-2 py-1 cart-bounce price-change-animation">
                             {item.quantity}
                         </span>
-                        <Button
+<Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity + 1)}
-                            className={`quantity-btn increase w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity >= (item.stock || 99) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 hover:scale-105"}`}
+                            className={`quantity-btn increase w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity >= (item.stock || 99) || loading ? "opacity-40 cursor-not-allowed bg-gray-50 border-gray-200" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 hover:scale-105 active:scale-95"}`}
                             disabled={item.quantity >= (item.stock || 99) || loading}
                             data-item-id={item.variantId || item.Id}>
                             {loading ? (
-                                <div className="w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                                <div className="w-3 h-3 border border-primary-300 border-t-primary-600 rounded-full animate-spin"></div>
                             ) : (
                                 <ApperIcon name="Plus" size={14} />
                             )}
@@ -87,7 +87,7 @@ variant="ghost"
                     size="sm"
                     onClick={handleRemoveItem}
                     disabled={loading}
-                    className={`delete-btn text-red-600 hover:text-red-700 hover:bg-red-50 p-2 transition-all duration-200 touch-target hover:scale-105 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                    className={`delete-btn text-red-600 hover:text-red-700 hover:bg-red-50 p-2 transition-all duration-200 touch-target hover:scale-105 active:scale-95 ${loading ? "opacity-40 cursor-not-allowed" : ""}`}
                     data-item-id={item.variantId || item.Id}>
                     {loading ? (
                         <div className="w-4 h-4 border border-red-300 border-t-red-600 rounded-full animate-spin"></div>

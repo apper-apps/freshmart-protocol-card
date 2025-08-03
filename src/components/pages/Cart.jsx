@@ -9,7 +9,7 @@ import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
 const Cart = () => {
-  const navigate = useNavigate();
+const navigate = useNavigate();
 const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasStock } = useCart();
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
@@ -30,9 +30,9 @@ const handleCheckout = () => {
     navigate("/categories");
   };
 
-  if (cart.length === 0) {
+if (cart.length === 0) {
     return (
-      <div className="p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <Empty
           title="Your cart is empty"
           message="Add some fresh groceries to get started!"

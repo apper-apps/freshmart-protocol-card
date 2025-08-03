@@ -145,8 +145,8 @@ const removeFromCart = useCallback(async (productId) => {
         
         const updatedCart = prevCart.filter(item => (item.variantId || item.Id) !== productId);
         
-        // Deferred localStorage write
-        requestAnimationFrame(() => {
+        // Immediate localStorage write for instant updates
+        setTimeout(() => {
           try {
             localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
           } catch (error) {
@@ -154,7 +154,7 @@ const removeFromCart = useCallback(async (productId) => {
           }
           setLoading(false);
           resolve();
-        });
+        }, 50); // Slight delay for animation
         
         return updatedCart;
       });
@@ -180,25 +180,23 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
               queueToast('warning', `Only ${maxStock} items available in stock`);
               return item;
             }
-            // Enhanced feedback for quantity updates
-            queueToast('success', `Quantity updated to ${newQuantity}`);
+            // Subtle feedback for quantity updates
+            queueToast('success', `Updated to ${newQuantity} items`);
             return { ...item, quantity: newQuantity };
           }
           return item;
         });
         
-        // Enhanced localStorage handling with error recovery
-        requestAnimationFrame(() => {
+        // Immediate localStorage update for real-time subtotal changes
+        setTimeout(() => {
           try {
             localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
-            queueToast('info', 'Cart updated successfully');
           } catch (error) {
             console.error('Error saving cart:', error);
-            queueToast('error', 'Failed to save cart changes');
           }
           setLoading(false);
           resolve();
-        });
+        }, 50); // Brief delay for smooth animation
         
         return updatedCart;
       });
