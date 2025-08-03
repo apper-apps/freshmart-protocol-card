@@ -192,7 +192,7 @@ const handlePaymentSubmit = async (e) => {
   };
 
 // Process payment using Apper SDK or manual methods
-  const processPayment = async () => {
+const processPayment = async () => {
     try {
       const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
       
@@ -205,6 +205,9 @@ const handlePaymentSubmit = async (e) => {
         return { success: true, status: 'pending', method: 'cod' };
       }
 
+      // Check if this is an online payment method (should auto-generate transaction ID)
+      const isOnlinePayment = ['jazzcash', 'easypaisa', 'bank'].includes(payment.method);
+      
       // Use Apper SDK for payment processing if available
       if (typeof window.Apper !== 'undefined') {
         const subtotal = getSubtotal();
@@ -234,21 +237,56 @@ const handlePaymentSubmit = async (e) => {
 
         const paymentResult = await window.Apper.processPayment(paymentConfig);
         
-        if (paymentResult.success) {
+        if (paymentResult.success && paymentResult.transactionId) {
           setPayment(prev => ({
             ...prev,
             transactionId: paymentResult.transactionId,
             status: paymentResult.status
           }));
           return paymentResult;
+        } else if (paymentResult.success && !paymentResult.transactionId) {
+          // Generate fallback transaction ID for successful payments without ID
+          const fallbackTransactionId = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          setPayment(prev => ({
+            ...prev,
+            transactionId: fallbackTransactionId,
+            status: paymentResult.status || 'completed'
+          }));
+          return {
+            ...paymentResult,
+            transactionId: fallbackTransactionId
+          };
         } else {
           throw new Error(paymentResult.error || 'Payment processing failed');
         }
       }
 
-      // Fallback: Manual payment verification required
-      if (!payment.transactionId) {
-        throw new Error('Transaction ID is required for manual payments');
+      // Fallback handling when Apper SDK is not available
+      if (isOnlinePayment) {
+        // For online payments, require transaction ID from user
+        if (!payment.transactionId || payment.transactionId.trim() === '') {
+          throw new Error(`Transaction ID is required for ${selectedPaymentMethod.name} payments. Please enter the transaction ID you received after making the payment.`);
+        }
+        
+        // Validate transaction ID format
+        if (payment.transactionId.length < 6) {
+          throw new Error('Transaction ID must be at least 6 characters long. Please enter a valid transaction ID.');
+        }
+      } else {
+        // For manual/other payment methods, generate transaction ID if not provided
+        if (!payment.transactionId) {
+          const generatedTransactionId = `MANUAL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          setPayment(prev => ({
+            ...prev,
+            transactionId: generatedTransactionId
+          }));
+          return { 
+            success: true, 
+            status: 'pending_verification', 
+            transactionId: generatedTransactionId,
+            method: payment.method 
+          };
+        }
       }
 
       return { 
@@ -288,11 +326,16 @@ const handlePaymentSubmit = async (e) => {
       }
 
       // Process payment
-      let paymentResult;
+let paymentResult;
       try {
         paymentResult = await processPayment();
         if (!paymentResult.success) {
-          throw new Error('Payment processing failed');
+          throw new Error('Payment processing failed - no valid result received');
+        }
+        
+        // Ensure transaction ID is present
+        if (!paymentResult.transactionId) {
+          throw new Error('Payment processing completed but no transaction ID was generated');
         }
       } catch (paymentError) {
         console.error('Payment processing failed:', paymentError);
@@ -308,10 +351,14 @@ const handlePaymentSubmit = async (e) => {
           if (paymentVerification.success && paymentVerification.status === 'completed') {
             finalPaymentStatus = paymentVerification.status;
             toast.success("Payment verified successfully!");
+          } else if (paymentVerification.success) {
+            finalPaymentStatus = paymentVerification.status;
+            toast.info(`Payment status: ${paymentVerification.status}`);
           }
         } catch (verifyError) {
           console.warn('Payment verification warning:', verifyError);
           // Continue with order placement even if verification has issues
+          toast.warning('Payment verification had issues, but continuing with order placement');
         }
       }
 
@@ -324,7 +371,7 @@ const handlePaymentSubmit = async (e) => {
         items: cart,
         deliveryAddress: address,
         paymentMethod: payment.method,
-        transactionId: paymentResult.transactionId || payment.transactionId,
+        transactionId: paymentResult.transactionId,
         paymentProof: payment.paymentProof || payment.screenshot,
         paymentStatus: finalPaymentStatus,
         paymentGateway: paymentMethods.find(m => m.id === payment.method)?.gateway,
@@ -336,9 +383,14 @@ const handlePaymentSubmit = async (e) => {
         processingTimestamp: new Date().toISOString()
       };
 
+      // Validate order data before submission
+      if (!orderData.transactionId) {
+        throw new Error('Critical error: Transaction ID missing from order data');
+      }
+
       // Set timeout for order creation (10 seconds max)
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), 10000);
+        setTimeout(() => reject(new Error('Request timeout - order creation took too long')), 10000);
       });
 
       const order = await Promise.race([

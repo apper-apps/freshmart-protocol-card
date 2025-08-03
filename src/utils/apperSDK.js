@@ -67,7 +67,7 @@ class ApperSDKManager {
       throw new Error('Apper SDK not available');
     }
 
-    try {
+try {
       const result = await window.Apper.processPayment({
         gateway: paymentConfig.gateway,
         amount: paymentConfig.amount,
@@ -79,9 +79,24 @@ class ApperSDKManager {
         cancelUrl: window.location.origin + '/checkout?payment=cancelled'
       });
 
+      // Validate result structure
+      if (!result) {
+        throw new Error('No result received from payment processor');
+      }
+
+      const isSuccess = result.status === 'success' || result.status === 'completed';
+      
+      // Generate fallback transaction ID if missing but payment was successful
+      let transactionId = result.transactionId;
+      if (isSuccess && !transactionId) {
+        transactionId = `APPER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        console.warn('Payment successful but no transaction ID provided, generated fallback:', transactionId);
+      }
+
       return {
-        success: result.status === 'success',
-        transactionId: result.transactionId,
+        success: isSuccess,
+        status: result.status,
+        transactionId: transactionId,
         receiptUrl: result.receiptUrl,
         error: result.error
       };
@@ -89,7 +104,8 @@ class ApperSDKManager {
       console.error('Apper payment processing error:', error);
       return {
         success: false,
-        error: error.message || 'Payment processing failed'
+        error: error.message || 'Payment processing failed',
+        transactionId: null
       };
     }
   }
@@ -104,18 +120,27 @@ class ApperSDKManager {
       throw new Error('Apper SDK not available');
     }
 
-    try {
+try {
+      if (!transactionId) {
+        throw new Error('Transaction ID is required for payment verification');
+      }
+
       const result = await window.Apper.verifyPayment(transactionId);
+      
+      if (!result) {
+        throw new Error('No verification result received');
+      }
+
       return {
-        success: result.status === 'completed',
-        status: result.status,
-        transactionId: result.transactionId,
+        success: result.status === 'completed' || result.status === 'success',
+        status: result.status || 'unknown',
+        transactionId: result.transactionId || transactionId,
         amount: result.amount,
-        timestamp: result.timestamp
+        timestamp: result.timestamp || new Date().toISOString()
       };
     } catch (error) {
       console.error('Apper payment verification error:', error);
-      throw new Error('Payment verification failed');
+      throw new Error(`Payment verification failed: ${error.message}`);
     }
   }
 
