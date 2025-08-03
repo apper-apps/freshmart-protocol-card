@@ -364,9 +364,10 @@ if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
           // Generate standardized emergency fallback transaction ID
           const timestamp = Date.now();
           const randomSuffix = Math.random().toString(36).substr(2, 12);
-          // Safely access paymentConfig with fallback for emergency cases
-          const gatewayPrefix = (typeof paymentConfig !== 'undefined' && paymentConfig?.gateway) 
-            ? paymentConfig.gateway.toUpperCase().substr(0, 3) 
+// Safely access payment method gateway with fallback for emergency cases
+          const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
+          const gatewayPrefix = selectedPaymentMethod?.gateway 
+            ? selectedPaymentMethod.gateway.toUpperCase().substring(0, 3) 
             : 'EMERGENCY';
           const emergencyTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
           
