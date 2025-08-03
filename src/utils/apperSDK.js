@@ -172,13 +172,7 @@ try {
           amount: null,
           timestamp: new Date().toISOString()
         };
-      }
-      
-// Enhanced transaction ID validation - accept multiple formats
-      const isSystemGenerated = cleanTransactionId.startsWith('MANUAL-') || 
-                                cleanTransactionId.startsWith('APPER-') || 
-                                cleanTransactionId.startsWith('EMERGENCY-') ||
-                                cleanTransactionId.startsWith('FALLBACK-ORDER-');
+}
       
       // Accept gateway transaction IDs (common patterns)
       const isGatewayGenerated = /^[A-Z0-9_-]{6,50}$/i.test(cleanTransactionId) ||
@@ -192,20 +186,6 @@ try {
                            /^[A-Z0-9_-]+$/i.test(cleanTransactionId);
       
       const isValidTransaction = isSystemGenerated || isGatewayGenerated || isValidFormat;
-      
-      // For system-generated IDs, use more lenient validation
-      if (isSystemGenerated) {
-        console.log('Processing system-generated transaction ID:', cleanTransactionId);
-        // For fallback IDs, return a mock successful verification to prevent blocking
-        return {
-          success: true,
-          status: 'pending_manual_verification',
-          transactionId: cleanTransactionId,
-          amount: null,
-          timestamp: new Date().toISOString()
-        };
-      }
-      
       // For regular transaction IDs, maintain stricter validation
       if (cleanTransactionId.length < 3) {
         throw new Error('Transaction ID appears incomplete. Please verify the transaction ID from your payment confirmation.');
