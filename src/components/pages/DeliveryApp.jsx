@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import { toast } from 'react-toastify';
-import { deliveryService } from '@/services/api/deliveryService';
-import ApperIcon from '@/components/ApperIcon';
-import Button from '@/components/atoms/Button';
-import Card from '@/components/atoms/Card';
-import Badge from '@/components/atoms/Badge';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import { cn } from '@/utils/cn';
+import React, { useState, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import L from 'leaflet'
+import toast from 'react-hot-toast'
+import { deliveryService } from '@/services/api/deliveryService'
+import ApperIcon from '@/components/ApperIcon'
+import Button from '@/components/atoms/Button'
+import Card from '@/components/atoms/Card'
+import Badge from '@/components/atoms/Badge'
+import Loading from '@/components/ui/Loading'
+import Error from '@/components/ui/Error'
+import { cn } from '@/utils/cn'
 
 // Fix Leaflet default icons
 delete L.Icon.Default.prototype._getIconUrl;
