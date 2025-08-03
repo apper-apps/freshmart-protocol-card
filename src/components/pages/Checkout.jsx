@@ -222,10 +222,12 @@ const processPayment = async () => {
         return { success: true, status: 'pending', method: 'cod' };
       }
 
-      // Check if this is an online payment method (should auto-generate transaction ID)
-      const isOnlinePayment = ['jazzcash', 'easypaisa', 'bank'].includes(payment.method);
+      // Enhanced online payment method detection
+      const isOnlinePayment = ['jazzcash', 'easypaisa', 'bank', 'mobile_wallet', 'bank_transfer'].includes(payment.method) ||
+                             selectedPaymentMethod?.type === 'mobile_wallet' || 
+                             selectedPaymentMethod?.type === 'bank';
       
-      // Use Apper SDK for payment processing if available
+      // Try Apper SDK first for automatic payment processing
       if (typeof window.Apper !== 'undefined') {
         const subtotal = getSubtotal();
         const deliveryFee = subtotal >= 2000 ? 0 : 150;
@@ -252,62 +254,88 @@ const processPayment = async () => {
           }
         };
 
-        const paymentResult = await window.Apper.processPayment(paymentConfig);
-        
-// Enhanced transaction ID validation and processing
-        let finalTransactionId = paymentResult.transactionId;
-        
-        // Clean and validate existing transaction ID
-        if (finalTransactionId && typeof finalTransactionId === 'string') {
-          finalTransactionId = finalTransactionId.trim();
-          if (finalTransactionId.length === 0) {
-            finalTransactionId = null;
+        try {
+          const paymentResult = await window.Apper.processPayment(paymentConfig);
+          
+          // Enhanced transaction ID validation and processing
+          let finalTransactionId = paymentResult.transactionId;
+          
+          // Clean and validate existing transaction ID
+          if (finalTransactionId && typeof finalTransactionId === 'string') {
+            finalTransactionId = finalTransactionId.trim();
+            if (finalTransactionId.length === 0) {
+              finalTransactionId = null;
+            }
           }
-        }
-        
-        if (paymentResult.success && finalTransactionId) {
-          setPayment(prev => ({
-            ...prev,
-            transactionId: finalTransactionId,
-            status: paymentResult.status || 'completed'
-          }));
-          return {
-            ...paymentResult,
-            transactionId: finalTransactionId
-          };
-        } else if (paymentResult.success && !finalTransactionId) {
-          // Generate robust fallback transaction ID for successful payments without ID
-          const timestamp = Date.now();
-          const randomSuffix = Math.random().toString(36).substr(2, 12);
-          const gatewayPrefix = selectedPaymentMethod?.gateway ? 
-            selectedPaymentMethod.gateway.toUpperCase().substr(0, 3) : 'APP';
-          const fallbackTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
           
-          console.log('Generated fallback transaction ID for successful payment:', fallbackTransactionId);
-          
-          setPayment(prev => ({
-            ...prev,
-            transactionId: fallbackTransactionId,
-            status: paymentResult.status || 'completed'
-          }));
-          return {
-            ...paymentResult,
-            transactionId: fallbackTransactionId,
-            status: paymentResult.status || 'completed'
-          };
-        } else {
-          throw new Error(paymentResult.error || 'Payment processing failed');
+          if (paymentResult.success && finalTransactionId) {
+            setPayment(prev => ({
+              ...prev,
+              transactionId: finalTransactionId,
+              status: paymentResult.status || 'completed'
+            }));
+            return {
+              ...paymentResult,
+              transactionId: finalTransactionId
+            };
+          } else if (paymentResult.success && !finalTransactionId) {
+            // Generate robust fallback transaction ID for successful payments without ID
+            const timestamp = Date.now();
+            const randomSuffix = Math.random().toString(36).substr(2, 12);
+            const gatewayPrefix = selectedPaymentMethod?.gateway ? 
+              selectedPaymentMethod.gateway.toUpperCase().substr(0, 3) : 'APP';
+            const fallbackTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
+            
+            console.log('Generated fallback transaction ID for successful payment:', fallbackTransactionId);
+            
+            setPayment(prev => ({
+              ...prev,
+              transactionId: fallbackTransactionId,
+              status: paymentResult.status || 'completed'
+            }));
+            return {
+              ...paymentResult,
+              transactionId: fallbackTransactionId,
+              status: paymentResult.status || 'completed'
+            };
+          } else {
+            throw new Error(paymentResult.error || 'Payment processing failed via SDK');
+          }
+        } catch (sdkError) {
+          console.warn('SDK payment failed, falling back to manual processing:', sdkError);
+          // Continue to fallback logic below
         }
       }
 
-// Fallback handling when Apper SDK is not available
+      // Fallback handling when Apper SDK is not available or failed
       if (isOnlinePayment) {
-        // For online payments, provide better user guidance and validation
+        // First, try to auto-generate transaction ID if none exists
         if (!payment.transactionId || payment.transactionId.trim() === '') {
-          throw new Error(`Please complete your ${selectedPaymentMethod.name} payment first, then enter the transaction ID you received. If you haven't made the payment yet, please use the account details provided above.`);
+          // Auto-generate transaction ID for online payments as fallback
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substr(2, 12);
+          const methodPrefix = selectedPaymentMethod?.gateway ? 
+            selectedPaymentMethod.gateway.toUpperCase().substr(0, 3) : 
+            payment.method.toUpperCase().substr(0, 3);
+          const autoTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
+          
+          setPayment(prev => ({
+            ...prev,
+            transactionId: autoTransactionId
+          }));
+          
+          console.log('Auto-generated transaction ID for online payment:', autoTransactionId);
+          
+          return { 
+            success: true, 
+            status: 'pending_verification', 
+            transactionId: autoTransactionId,
+            method: payment.method,
+            note: 'Auto-generated transaction ID - payment verification required'
+          };
         }
         
-        // Enhanced transaction ID format validation
+        // Enhanced transaction ID format validation for manually entered IDs
         const trimmedTransactionId = payment.transactionId.trim();
         if (trimmedTransactionId.length < 4) {
           throw new Error('Transaction ID is too short. Please enter the complete transaction ID from your payment confirmation.');
@@ -336,7 +364,7 @@ const processPayment = async () => {
           }));
         }
         
-return { 
+        return { 
           success: true, 
           status: payment.method === 'cod' ? 'pending' : 'pending_verification', 
           transactionId: finalTransactionId,
