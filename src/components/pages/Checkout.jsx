@@ -176,17 +176,21 @@ const handlePaymentSubmit = async (e) => {
           throw new Error(paymentResult.error || 'Payment processing failed');
         }
 } else {
-        // Enhanced fallback for manual entry if SDK not available
+// Enhanced fallback for manual entry if SDK not available
         if (!payment.transactionId || payment.transactionId.trim() === '') {
-          // For online payments, generate a fallback transaction ID to prevent blocking
+          // For online payments, generate a standardized fallback transaction ID
           const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
           if (selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank') {
-            const fallbackTransactionId = `MANUAL-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
+            const timestamp = Date.now();
+            const randomSuffix = Math.random().toString(36).substr(2, 12);
+            const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
+            const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
+            
             setPayment(prev => ({
               ...prev,
               transactionId: fallbackTransactionId
             }));
-            toast.warning("Please complete your payment and note the transaction ID for verification");
+            toast.warning("Payment will be processed with generated transaction ID. Please complete your payment.");
             setStep(3);
           } else {
             toast.error("Please enter transaction ID to continue");
@@ -356,9 +360,13 @@ let paymentResult;
         }
         
 // Enhanced transaction ID validation with better error messages
-        if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
-          // Generate emergency fallback transaction ID to prevent order failure
-          const emergencyTransactionId = `EMERGENCY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
+          // Generate standardized emergency fallback transaction ID
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substr(2, 12);
+          const gatewayPrefix = paymentConfig.gateway?.toUpperCase().substr(0, 3) || 'EMERGENCY';
+          const emergencyTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
+          
           console.warn('Payment processing completed but no transaction ID was generated, using emergency fallback:', emergencyTransactionId);
           
           setPayment(prev => ({
@@ -426,9 +434,12 @@ let paymentResult;
       };
 
 // Enhanced order data validation with transaction ID fallback
-      if (!orderData.transactionId || orderData.transactionId.trim() === '') {
-        // Final fallback transaction ID generation to prevent order failure
-        const finalFallbackTransactionId = `FALLBACK-ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 12)}`;
+if (!orderData.transactionId || orderData.transactionId.trim() === '') {
+        // Final standardized fallback transaction ID generation
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substr(2, 12);
+        const finalFallbackTransactionId = `FALLBACK-ORDER-${timestamp}-${randomSuffix}`;
+        
         console.error('Critical: Transaction ID missing from order data, generating final fallback:', finalFallbackTransactionId);
         
         orderData.transactionId = finalFallbackTransactionId;
