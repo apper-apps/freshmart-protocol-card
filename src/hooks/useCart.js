@@ -85,9 +85,9 @@ useEffect(() => {
   }, [toastQueue, loading]);
 const queueToast = useCallback((type, message) => {
     // Defer toast queuing to prevent render-phase state updates
-    queueMicrotask(() => {
+    setTimeout(() => {
       setToastQueue(prev => [...prev, { type, message, timestamp: Date.now() }]);
-    });
+    }, 0);
   }, []);
 
   // Safe toast helper that prevents render-phase updates
@@ -327,17 +327,15 @@ const targetItem = prevCart.find(item => (item.variantId || item.Id) === product
         }
 
         const maxStock = targetItem.stock || 99;
+const maxStock = targetItem.stock || 99;
         
         // Stock validation with user feedback
         if (newQuantity > maxStock) {
-if (newQuantity > maxStock) {
           safeToast('error', `Only ${maxStock} ${targetItem.displayName || targetItem.title} available in stock`);
           setLoading(false);
           resolve();
           return prevCart;
         }
-
-        // Calculate quantity difference for better feedback
         const quantityDiff = newQuantity - targetItem.quantity;
         const action = quantityDiff > 0 ? 'increased' : 'decreased';
         safeToast('success', `Quantity ${action} to ${newQuantity}`);
