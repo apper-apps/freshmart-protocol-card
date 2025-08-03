@@ -115,8 +115,16 @@ const Checkout = () => {
 
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
-  const tax = Math.round(subtotal * 0.05);
-const total = subtotal + deliveryFee + tax;
+const tax = Math.round(subtotal * 0.05);
+  const total = subtotal + deliveryFee + tax;
+
+  // Transaction ID validation helper
+  const isValidTransactionId = (txId) => {
+    if (!txId || typeof txId !== 'string') return false;
+    const trimmed = txId.trim();
+    return trimmed.length >= 6 && /^[A-Za-z0-9\-_]+$/.test(trimmed);
+  };
+
   const handleAddressSubmit = (e) => {
     e.preventDefault();
     if (!address.fullName || !address.phone || !address.address || !address.city) {
@@ -133,14 +141,15 @@ const handlePaymentSubmit = async (e) => {
       toast.error("Please select a payment method");
       return;
     }
-
-    try {
+try {
       setLoading(true);
       toast.info("Initializing payment gateway...");
 
+      const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
+      const isOnlinePayment = selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank';
+
       // Initialize Apper SDK for payment processing
       if (typeof window.Apper !== 'undefined') {
-        const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
         
         const paymentConfig = {
           gateway: selectedPaymentMethod.gateway,
@@ -163,7 +172,7 @@ const handlePaymentSubmit = async (e) => {
 
         const paymentResult = await window.Apper.processPayment(paymentConfig);
         
-        if (paymentResult.success) {
+        if (paymentResult.success && paymentResult.transactionId) {
           setPayment(prev => ({
             ...prev,
             transactionId: paymentResult.transactionId,
@@ -173,11 +182,18 @@ const handlePaymentSubmit = async (e) => {
           toast.success("Payment processed successfully!");
           setStep(3);
         } else {
-          throw new Error(paymentResult.error || 'Payment processing failed');
+          throw new Error(paymentResult.error || 'Payment processing failed - no transaction ID received');
         }
-} else {
-// Enhanced fallback for manual entry if SDK not available
+      } else {
+        // Enhanced fallback for manual entry if SDK not available
         const trimmedTransactionId = payment.transactionId?.trim() || '';
+        
+        // Validate transaction ID for online payments
+        if (isOnlinePayment && !isValidTransactionId(trimmedTransactionId)) {
+          toast.error("Please enter a valid transaction ID for online payments");
+          setLoading(false);
+          return;
+        }
         
         // Enhanced transaction ID validation for online payments
         const isValidTransactionId = (txId) => {
@@ -188,15 +204,15 @@ const handlePaymentSubmit = async (e) => {
         
         if (!isValidTransactionId(trimmedTransactionId)) {
           // For online payments, generate a standardized fallback transaction ID
-          const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
-          if (selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank') {
-            const timestamp = Date.now();
-            const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
-            const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
-            const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
-            
-            setPayment(prev => ({
-              ...prev,
+// Generate fallback transaction ID for online payments if empty
+        if (isOnlinePayment && !trimmedTransactionId) {
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
+          const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
+          const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
+          
+          setPayment(prev => ({
+            ...prev,
               transactionId: fallbackTransactionId
             }));
             toast.warning("Generated transaction ID for your payment. Please complete your payment and keep this ID for reference.");
@@ -281,7 +297,15 @@ const processPayment = async () => {
               finalTransactionId = null;
             }
           }
-          
+// Final validation before proceeding
+        const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
+        const isOnlinePayment = selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank';
+        
+        if (isOnlinePayment && !isValidTransactionId(payment.transactionId)) {
+          toast.error("Valid Transaction ID is required for online payments");
+          setLoading(false);
+          return;
+        }
           if (paymentResult.success && finalTransactionId) {
             setPayment(prev => ({
               ...prev,
@@ -376,6 +400,13 @@ const processPayment = async () => {
             ...prev,
             transactionId: finalTransactionId
           }));
+}
+        
+        // Ensure transaction ID exists for order processing
+        if (!payment.transactionId || !isValidTransactionId(payment.transactionId)) {
+          toast.error("Payment validation failed - invalid transaction ID");
+          setLoading(false);
+          return;
         }
         
         return { 
@@ -470,9 +501,17 @@ let paymentResult;
         return;
       }
 
-      // Verify payment status if using Apper SDK
-      let finalPaymentStatus = paymentResult.status;
-      if (typeof window.Apper !== 'undefined' && paymentResult.transactionId) {
+// Verify payment status if using Apper SDK
+      let finalPaymentStatus = payment.status || 'pending';
+      
+      // Ensure we have a valid transaction ID before verification
+      if (!payment.transactionId || !isValidTransactionId(payment.transactionId)) {
+        toast.error("Cannot verify payment - invalid transaction ID");
+        setLoading(false);
+        return;
+      }
+      
+      if (typeof window.Apper !== 'undefined' && payment.transactionId) {
         try {
           const paymentVerification = await window.Apper.verifyPayment(paymentResult.transactionId);
           if (paymentVerification.success && paymentVerification.status === 'completed') {
