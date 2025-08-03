@@ -161,10 +161,19 @@ try {
                                 cleanTransactionId.startsWith('EAS-') ||
                                 cleanTransactionId.startsWith('BAN-') ||
                                 cleanTransactionId.startsWith('FAIL-');
-      
-      // For any system-generated transaction ID, provide immediate verification
+// Enhanced validation for system-generated transaction IDs
       if (isSystemGenerated) {
-        console.log('Processing system-generated transaction ID:', cleanTransactionId);
+        // Validate format even for system-generated IDs
+        if (!cleanTransactionId || cleanTransactionId.length < 8) {
+          throw new Error('Transaction ID is required for online payments - invalid system-generated ID');
+        }
+        
+        // Ensure system-generated IDs follow proper format
+        if (!/^[a-zA-Z0-9\-_.]+$/.test(cleanTransactionId)) {
+          throw new Error('Transaction ID format is invalid - contains unsupported characters');
+        }
+        
+        console.log('Processing validated system-generated transaction ID:', cleanTransactionId);
         return {
           success: true,
           status: 'completed',

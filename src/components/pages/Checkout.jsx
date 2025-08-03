@@ -177,12 +177,21 @@ const handlePaymentSubmit = async (e) => {
         }
 } else {
 // Enhanced fallback for manual entry if SDK not available
-        if (!payment.transactionId || payment.transactionId.trim() === '') {
+        const trimmedTransactionId = payment.transactionId?.trim() || '';
+        
+        // Enhanced transaction ID validation for online payments
+        const isValidTransactionId = (txId) => {
+          if (!txId || txId.length < 8) return false;
+          // Allow alphanumeric characters, hyphens, underscores, and dots
+          return /^[a-zA-Z0-9\-_.]+$/.test(txId);
+        };
+        
+        if (!isValidTransactionId(trimmedTransactionId)) {
           // For online payments, generate a standardized fallback transaction ID
           const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
           if (selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank') {
             const timestamp = Date.now();
-            const randomSuffix = Math.random().toString(36).substr(2, 12);
+            const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
             const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
             const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
             
@@ -190,13 +199,18 @@ const handlePaymentSubmit = async (e) => {
               ...prev,
               transactionId: fallbackTransactionId
             }));
-            toast.warning("Payment will be processed with generated transaction ID. Please complete your payment.");
+            toast.warning("Generated transaction ID for your payment. Please complete your payment and keep this ID for reference.");
             setStep(3);
           } else {
-            toast.error("Please enter transaction ID to continue");
+            toast.error("Please enter a valid transaction ID (minimum 8 characters, alphanumeric) to continue");
             return;
           }
         } else {
+          // Valid transaction ID provided
+          setPayment(prev => ({
+            ...prev,
+            transactionId: trimmedTransactionId
+          }));
           setStep(3);
         }
       }
@@ -409,11 +423,19 @@ let paymentResult;
           throw new Error('Payment processing failed - no valid result received');
         }
         
-// Enhanced transaction ID validation with better error messages
-if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
+// Enhanced transaction ID validation with better error messages and format checking
+        const isValidTransactionId = (txId) => {
+          if (!txId || typeof txId !== 'string') return false;
+          const trimmed = txId.trim();
+          if (trimmed.length < 8) return false;
+          // Allow alphanumeric characters, hyphens, underscores, and dots
+          return /^[a-zA-Z0-9\-_.]+$/.test(trimmed);
+        };
+
+        if (!isValidTransactionId(paymentResult.transactionId)) {
           // Generate standardized emergency fallback transaction ID
           const timestamp = Date.now();
-          const randomSuffix = Math.random().toString(36).substr(2, 12);
+          const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
 // Safely access payment method gateway with fallback for emergency cases
           const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
           const gatewayPrefix = selectedPaymentMethod?.gateway 
@@ -421,7 +443,7 @@ if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
             : 'EMERGENCY';
           const emergencyTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
           
-          console.warn('Payment processing completed but no transaction ID was generated, using emergency fallback:', emergencyTransactionId);
+          console.warn('Payment processing completed but no valid transaction ID was generated, using emergency fallback:', emergencyTransactionId);
           setPayment(prev => ({
             ...prev,
             transactionId: emergencyTransactionId
@@ -435,13 +457,15 @@ if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
         
 // Enhanced error messaging based on error type with better user guidance
         if (paymentError.message.includes('Transaction ID is required')) {
-          toast.error("Payment processing requires transaction verification. Please complete your payment and try again.");
-        } else if (paymentError.message.includes('too short')) {
-          toast.error("Transaction ID appears incomplete. Please verify and enter the complete transaction ID.");
+          toast.error("Transaction ID is required for online payments. Please complete your payment first and enter the transaction ID.");
+        } else if (paymentError.message.includes('too short') || paymentError.message.includes('minimum 8 characters')) {
+          toast.error("Transaction ID must be at least 8 characters long. Please enter the complete transaction ID from your payment confirmation.");
+        } else if (paymentError.message.includes('invalid format') || paymentError.message.includes('alphanumeric')) {
+          toast.error("Invalid transaction ID format. Please enter only letters, numbers, hyphens, or underscores.");
         } else if (paymentError.message.includes('complete your')) {
           toast.error(paymentError.message);
         } else {
-          toast.error(paymentError.message || "Payment processing failed. Please try again.");
+          toast.error(paymentError.message || "Payment processing failed. Please verify your transaction ID and try again.");
         }
         return;
       }
