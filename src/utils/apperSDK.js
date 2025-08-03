@@ -120,12 +120,14 @@ const isSuccess = result.status === 'success' || result.status === 'completed';
         receiptUrl: result.receiptUrl,
         error: result.error
       };
-    } catch (error) {
+} catch (error) {
       console.error('Apper payment processing error:', error);
+      console.error('Payment config:', paymentConfig);
       return {
         success: false,
         error: error.message || 'Payment processing failed',
-        transactionId: null
+        transactionId: null,
+        errorCode: error.code || 'PAYMENT_ERROR'
       };
     }
   }
@@ -148,11 +150,24 @@ try {
       
       const cleanTransactionId = typeof transactionId === 'string' ? transactionId.trim() : String(transactionId);
       
-      // Allow system-generated transaction IDs (more permissive validation)
+// Enhanced transaction ID validation - accept multiple formats
       const isSystemGenerated = cleanTransactionId.startsWith('MANUAL-') || 
                                 cleanTransactionId.startsWith('APPER-') || 
                                 cleanTransactionId.startsWith('EMERGENCY-') ||
                                 cleanTransactionId.startsWith('FALLBACK-ORDER-');
+      
+      // Accept gateway transaction IDs (common patterns)
+      const isGatewayGenerated = /^[A-Z0-9_-]{6,50}$/i.test(cleanTransactionId) ||
+                                /^TXN[A-Z0-9]{10,}$/i.test(cleanTransactionId) ||
+                                /^PAY[A-Z0-9]{8,}$/i.test(cleanTransactionId) ||
+                                /^[0-9]{10,20}$/.test(cleanTransactionId);
+      
+      // Accept any reasonably formatted transaction ID
+      const isValidFormat = cleanTransactionId.length >= 6 && 
+                           cleanTransactionId.length <= 100 &&
+                           /^[A-Z0-9_-]+$/i.test(cleanTransactionId);
+      
+      const isValidTransaction = isSystemGenerated || isGatewayGenerated || isValidFormat;
       
       // For system-generated IDs, use more lenient validation
       if (isSystemGenerated) {
