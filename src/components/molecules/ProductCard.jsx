@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import ApperIcon from "@/components/ApperIcon";
@@ -10,12 +10,20 @@ import Card from "@/components/atoms/Card";
 const ProductCard = ({ product }) => {
   const navigate = useNavigate();
   const { addToCart, isInCart, getCartItem } = useCart();
-  const [selectedVariant, setSelectedVariant] = useState(
-    product.variants && product.variants.length > 0 ? product.variants[0] : null
-  );
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize selectedVariant after mount to prevent setState during render
+  useEffect(() => {
+    if (!isInitialized && product?.variants?.length > 0) {
+      setSelectedVariant(product.variants[0]);
+      setIsInitialized(true);
+    } else if (!isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [product?.variants, isInitialized]);
   // Memoize variant ID to prevent render-phase recalculations
 const variantId = useMemo(() => {
     return selectedVariant ? `${product.Id}-${JSON.stringify(selectedVariant)}` : product.Id;

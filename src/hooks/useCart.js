@@ -83,11 +83,51 @@ useEffect(() => {
       setToastQueue(prev => prev.slice(1));
     }
   }, [toastQueue, loading]);
-
-  const queueToast = useCallback((type, message) => {
-    setToastQueue(prev => [...prev, { type, message, timestamp: Date.now() }]);
+const queueToast = useCallback((type, message) => {
+    // Defer toast queuing to prevent render-phase state updates
+    queueMicrotask(() => {
+      setToastQueue(prev => [...prev, { type, message, timestamp: Date.now() }]);
+    });
   }, []);
 
+  // Safe toast helper that prevents render-phase updates
+  const safeToast = useCallback((type, message) => {
+    // Use setTimeout to ensure we're not in render phase
+    setTimeout(() => {
+      try {
+        if (type === 'success') {
+          toast.success(message, {
+            position: "bottom-center",
+            autoClose: 2000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: false,
+            draggable: true,
+          });
+        } else if (type === 'warning') {
+          toast.warning(message, {
+            position: "bottom-center",
+            autoClose: 3000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        } else if (type === 'error') {
+          toast.error(message, {
+            position: "bottom-center",
+            autoClose: 4000,
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }
+      } catch (error) {
+        console.error('Toast notification error:', error);
+      }
+    }, 0);
+  }, []);
   // Process operation queue
   useEffect(() => {
     if (operationQueue.length > 0 && !isProcessingQueue && !loading) {
@@ -127,15 +167,14 @@ if (loading || isProcessingQueue) {
         ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
         : '';
 
-      // Validate stock before proceeding
+// Validate stock before proceeding
       const maxStock = product.stock || 99;
       if (quantity > maxStock) {
-        toast.error(`Only ${maxStock} items available in stock`);
+        safeToast('error', `Only ${maxStock} items available in stock`);
         setLoading(false);
         resolve();
         return;
       }
-
       setCart(prevCart => {
         const existingItem = prevCart.find(item => 
           (item.variantId || item.Id) === itemId
@@ -145,17 +184,16 @@ if (loading || isProcessingQueue) {
         let operation = 'add';
         
         if (existingItem) {
-          const newQuantity = existingItem.quantity + quantity;
+const newQuantity = existingItem.quantity + quantity;
           if (newQuantity > maxStock) {
-            toast.error(`Only ${maxStock} items available in stock`);
+            safeToast('error', `Only ${maxStock} items available in stock`);
             setLoading(false);
             resolve();
             return prevCart;
           }
           
           operation = 'update';
-          toast.success(`Updated ${product.title}${variantText} in cart`);
-          
+          safeToast('success', `Updated ${product.title}${variantText} in cart`);
           updatedCart = prevCart.map(item =>
             (item.variantId || item.Id) === itemId
               ? { 
@@ -166,9 +204,8 @@ if (loading || isProcessingQueue) {
                 }
               : item
           );
-        } else {
-          toast.success(`${product.title}${variantText} added to cart`);
-          
+} else {
+          safeToast('success', `${product.title}${variantText} added to cart`);
           updatedCart = [...prevCart, { 
             ...product, 
             quantity,
@@ -186,9 +223,9 @@ if (loading || isProcessingQueue) {
             localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
             setLoading(false);
             resolve();
-          } catch (error) {
+} catch (error) {
             console.error('Error saving cart:', error);
-            toast.error('Failed to save cart. Please try again.');
+            safeToast('error', 'Failed to save cart. Please try again.');
             setLoading(false);
             reject(error);
           }
@@ -215,10 +252,10 @@ const removeFromCart = useCallback(async (productId) => {
       setLoading(true);
       
       setCart(prevCart => {
-        const itemToRemove = prevCart.find(item => (item.variantId || item.Id) === productId);
+const itemToRemove = prevCart.find(item => (item.variantId || item.Id) === productId);
         
         if (!itemToRemove) {
-          toast.error('Item not found in cart');
+          safeToast('error', 'Item not found in cart');
           setLoading(false);
           resolve();
           return prevCart;
@@ -227,8 +264,7 @@ const removeFromCart = useCallback(async (productId) => {
         // Optimistic removal with animation delay
         const updatedCart = prevCart.filter(item => (item.variantId || item.Id) !== productId);
         
-        toast.success(`${itemToRemove.displayName || itemToRemove.title} removed from cart`);
-        
+        safeToast('success', `${itemToRemove.displayName || itemToRemove.title} removed from cart`);
         // Enhanced localStorage operation with error recovery
         const saveOperation = () => {
           try {
@@ -245,10 +281,9 @@ const removeFromCart = useCallback(async (productId) => {
             
             setLoading(false);
             resolve();
-          } catch (error) {
+} catch (error) {
             console.error('Error removing from cart:', error);
-            toast.error('Failed to remove item. Please try again.');
-            
+            safeToast('error', 'Failed to remove item. Please try again.');
             // Revert cart state on storage error
             setCart(prevCart);
             setLoading(false);
@@ -282,10 +317,10 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
       setLoading(true);
       
       setCart(prevCart => {
-        const targetItem = prevCart.find(item => (item.variantId || item.Id) === productId);
+const targetItem = prevCart.find(item => (item.variantId || item.Id) === productId);
         
         if (!targetItem) {
-          toast.error('Item not found in cart');
+          safeToast('error', 'Item not found in cart');
           setLoading(false);
           resolve();
           return prevCart;
@@ -295,7 +330,8 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         
         // Stock validation with user feedback
         if (newQuantity > maxStock) {
-          toast.error(`Only ${maxStock} ${targetItem.displayName || targetItem.title} available in stock`);
+if (newQuantity > maxStock) {
+          safeToast('error', `Only ${maxStock} ${targetItem.displayName || targetItem.title} available in stock`);
           setLoading(false);
           resolve();
           return prevCart;
@@ -304,9 +340,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         // Calculate quantity difference for better feedback
         const quantityDiff = newQuantity - targetItem.quantity;
         const action = quantityDiff > 0 ? 'increased' : 'decreased';
-        
-        toast.success(`Quantity ${action} to ${newQuantity}`);
-
+        safeToast('success', `Quantity ${action} to ${newQuantity}`);
         const updatedCart = prevCart.map(item => {
           const itemId = item.variantId || item.Id;
           if (itemId === productId) {
@@ -340,11 +374,10 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
             }));
             
             setLoading(false);
-            resolve();
+resolve();
           } catch (error) {
             console.error('Error updating quantity:', error);
-            toast.error('Failed to update quantity. Please try again.');
-            
+            safeToast('error', 'Failed to update quantity. Please try again.');
             // Revert to previous state on error
             setCart(prevCart);
             setLoading(false);
@@ -398,15 +431,13 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
           localStorage.removeItem('freshmart-cart');
           localStorage.removeItem('freshmart-cart-stats');
           
-          const itemCount = cartBackup.reduce((sum, item) => sum + item.quantity, 0);
-          toast.success(`Cart cleared (${itemCount} items removed)`);
-          
+const itemCount = cartBackup.reduce((sum, item) => sum + item.quantity, 0);
+          safeToast('success', `Cart cleared (${itemCount} items removed)`);
           setLoading(false);
-          resolve();
+resolve();
         } catch (error) {
           console.error('Error clearing cart:', error);
-          toast.error('Failed to clear cart. Please try again.');
-          
+          safeToast('error', 'Failed to clear cart. Please try again.');
           // Restore cart on error
           setCart(cartBackup);
           setLoading(false);
@@ -444,8 +475,8 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
   }, [cart]);
 
   const validateCart = useCallback(async () => {
-    if (cart.length === 0) {
-      toast.error("Your cart is empty. Add some items to proceed.");
+if (cart.length === 0) {
+      safeToast('error', "Your cart is empty. Add some items to proceed.");
       return false;
     }
     
@@ -454,28 +485,29 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
       const products = (await import('@/services/mockData/products.json')).default;
       
       for (const item of cart) {
-        // Check if product exists in database
+// Check if product exists in database
         const product = products.find(p => p.Id === item.Id);
         if (!product) {
-          toast.error(`Product "${item.title}" is no longer available.`);
+          safeToast('error', `Product "${item.title}" is no longer available.`);
           return false;
         }
         
         // Check if product is active
         if (!product.isActive) {
-          toast.error(`Product "${item.title}" is currently unavailable.`);
+          safeToast('error', `Product "${item.title}" is currently unavailable.`);
           return false;
         }
         
         // Check stock availability
+// Check stock availability
         if (product.stock < item.quantity) {
-          toast.error(`Only ${product.stock} units of "${item.title}" are available.`);
+          safeToast('error', `Only ${product.stock} units of "${item.title}" are available.`);
           return false;
         }
         
         // Check for valid quantity
         if (item.quantity <= 0) {
-          toast.error(`Invalid quantity for "${item.title}".`);
+          safeToast('error', `Invalid quantity for "${item.title}".`);
           return false;
         }
       }
@@ -483,7 +515,7 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
       return true;
     } catch (error) {
       console.error('Cart validation error:', error);
-      toast.error("Failed to validate cart. Please try again.");
+      safeToast('error', "Failed to validate cart. Please try again.");
       return false;
     }
   }, [cart]);
