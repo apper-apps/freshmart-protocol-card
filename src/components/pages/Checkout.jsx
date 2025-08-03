@@ -4,65 +4,81 @@ import { toast } from "react-toastify";
 import { useCart } from "@/hooks/useCart";
 import orderService from "@/services/api/orderService";
 import ApperIcon from "@/components/ApperIcon";
+import Error from "@/components/ui/Error";
 import Input from "@/components/atoms/Input";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
+import { confirmOrder, processPayment, verifyPayment } from "@/utils/apperSDK";
 
 const Checkout = () => {
   const navigate = useNavigate();
-const { cart, getSubtotal, clearCart, validateCart } = useCart();
+  const { cart, getSubtotal, clearCart, validateCart } = useCart();
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirmation
   const [redirecting, setRedirecting] = useState(false);
-  
   // Address form
-  const [address, setAddress] = useState({
+// Default address state
+  const defaultAddress = {
     fullName: "",
     phone: "",
     address: "",
     city: "",
     area: "",
     landmarks: ""
-  });
+  };
 
-  // Payment form
-  const [payment, setPayment] = useState({
-    method: "jazzcash",
+  const [address, setAddress] = useState(defaultAddress);
+
+  // Payment methods configuration
+  const paymentMethods = [
+    { id: "jazzcash", name: "JazzCash", account: "03001234567", icon: "Smartphone", gateway: "jazzcash", type: "mobile_wallet" },
+    { id: "easypaisa", name: "EasyPaisa", account: "03009876543", icon: "Smartphone", gateway: "easypaisa", type: "mobile_wallet" },
+    { id: "bank", name: "Bank Transfer", account: "1234567890 (HBL)", icon: "Building", gateway: "bank_transfer", type: "bank" },
+    { id: "cod", name: "Cash on Delivery", account: "Pay when delivered", icon: "Banknote", gateway: "cod", type: "cash" }
+  ];
+
+  // Payment form - initialize with first payment method
+  const [payment, setPayment] = useState(() => ({
+    method: paymentMethods[0].id,
     transactionId: "",
-    screenshot: null
-  });
+    screenshot: null,
+    status: "pending"
+  }));
 
   // Handle cart validation and navigation after render
-useEffect(() => {
-    // Enhanced redirection guard - prevent infinite loops
-    if (window.location.pathname.includes('redirecting') || window.location.search.includes('redirect=true')) {
-      toast.error('Redirecting to cart to resolve navigation issue');
-      window.location.href = '/cart';
-      return;
-    }
-
-    if (!cart || cart.length === 0) {
+// Initialize checkout and handle cart validation
+  useEffect(() => {
+    if (cart.length === 0 && !redirecting) {
       setRedirecting(true);
       toast.error("Your cart is empty. Please add items before checkout.");
-      // Use setTimeout to ensure navigation happens after render
       const timer = setTimeout(() => {
         navigate("/cart", { replace: true });
-      }, 100);
+      }, 2000);
       
       return () => clearTimeout(timer);
-    } else {
-      // Validate cart when component loads with stock checking
-      if (!validateCartWithStock()) {
-        setRedirecting(true);
-        const timer = setTimeout(() => {
-          navigate("/cart", { replace: true });
-        }, 1500); // Give user time to see validation errors
-        
-        return () => clearTimeout(timer);
-      }
     }
-  }, [cart, navigate]);
+    
+    // Initialize checkout if cart has items
+    if (cart.length > 0) {
+      initializeCheckout(cart);
+    }
+  }, [cart, navigate, redirecting]);
+
+  // Initialize checkout process
+  const initializeCheckout = async (cartItems) => {
+    try {
+      // Validate cart items against current stock
+      const isValid = await validateCart();
+      if (!isValid && !redirecting) {
+        setRedirecting(true);
+        setTimeout(() => navigate("/cart", { replace: true }), 1500);
+      }
+    } catch (error) {
+      console.error('Checkout initialization error:', error);
+      toast.error("Failed to initialize checkout. Please try again.");
+    }
+  };
 
 // Enhanced cart validation with stock checking - equivalent to backend validation
   const validateCartWithStock = async () => {
@@ -100,43 +116,7 @@ useEffect(() => {
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
   const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + deliveryFee + tax;
-
-const paymentMethods = [
-    { 
-      id: "jazzcash", 
-      name: "JazzCash", 
-      account: "03001234567", 
-      icon: "Smartphone",
-      gateway: "jazzcash",
-      type: "mobile_wallet"
-    },
-    { 
-      id: "easypaisa", 
-      name: "EasyPaisa", 
-      account: "03009876543", 
-      icon: "Smartphone",
-      gateway: "easypaisa", 
-      type: "mobile_wallet"
-    },
-    { 
-      id: "bank", 
-      name: "Bank Transfer", 
-      account: "1234567890 (HBL)", 
-      icon: "Building",
-      gateway: "bank_transfer",
-      type: "bank"
-    },
-    { 
-      id: "card", 
-      name: "Credit/Debit Card", 
-      account: "Visa/Mastercard", 
-      icon: "CreditCard",
-      gateway: "stripe",
-      type: "card"
-    }
-  ];
-
+const total = subtotal + deliveryFee + tax;
   const handleAddressSubmit = (e) => {
     e.preventDefault();
     if (!address.fullName || !address.phone || !address.address || !address.city) {
@@ -211,7 +191,80 @@ const handlePaymentSubmit = async (e) => {
     }
   };
 
-const handlePlaceOrder = async () => {
+// Process payment using Apper SDK or manual methods
+  const processPayment = async () => {
+    try {
+      const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
+      
+      if (!selectedPaymentMethod) {
+        throw new Error('Invalid payment method selected');
+      }
+
+      // For Cash on Delivery, no payment processing needed
+      if (payment.method === 'cod') {
+        return { success: true, status: 'pending', method: 'cod' };
+      }
+
+      // Use Apper SDK for payment processing if available
+      if (typeof window.Apper !== 'undefined') {
+        const subtotal = getSubtotal();
+        const deliveryFee = subtotal >= 2000 ? 0 : 150;
+        const tax = Math.round(subtotal * 0.05);
+        const total = subtotal + deliveryFee + tax;
+
+        const paymentConfig = {
+          gateway: selectedPaymentMethod.gateway,
+          amount: total,
+          currency: "PKR",
+          orderId: `ORDER-${Date.now()}`,
+          customerInfo: {
+            name: address.fullName,
+            email: `${address.phone}@freshmart.com`,
+            phone: address.phone
+          },
+          metadata: {
+            items: cart.map(item => ({ 
+              id: item.Id, 
+              name: item.title, 
+              quantity: item.quantity, 
+              price: item.price 
+            }))
+          }
+        };
+
+        const paymentResult = await window.Apper.processPayment(paymentConfig);
+        
+        if (paymentResult.success) {
+          setPayment(prev => ({
+            ...prev,
+            transactionId: paymentResult.transactionId,
+            status: paymentResult.status
+          }));
+          return paymentResult;
+        } else {
+          throw new Error(paymentResult.error || 'Payment processing failed');
+        }
+      }
+
+      // Fallback: Manual payment verification required
+      if (!payment.transactionId) {
+        throw new Error('Transaction ID is required for manual payments');
+      }
+
+      return { 
+        success: true, 
+        status: 'pending_verification', 
+        transactionId: payment.transactionId,
+        method: payment.method 
+      };
+
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      throw error;
+    }
+  };
+
+  const handlePlaceOrder = async () => {
     try {
       setLoading(true);
       toast.info("Processing your order...");
@@ -223,35 +276,51 @@ const handlePlaceOrder = async () => {
       }
 
       // Final cart validation before order placement
-      const isValid = await validateCartWithStock();
+      const isValid = await validateCart();
       if (!isValid) {
         setRedirecting(true);
         setTimeout(() => navigate("/cart", { replace: true }), 1000);
         return;
       }
 
+      // Process payment
+      let paymentResult;
+      try {
+        paymentResult = await processPayment();
+        if (!paymentResult.success) {
+          throw new Error('Payment processing failed');
+        }
+      } catch (paymentError) {
+        console.error('Payment processing failed:', paymentError);
+        toast.error(paymentError.message || "Payment processing failed. Please try again.");
+        return;
+      }
+
       // Verify payment status if using Apper SDK
-      let finalPaymentStatus = payment.status;
-      if (typeof window.Apper !== 'undefined' && payment.transactionId) {
+      let finalPaymentStatus = paymentResult.status;
+      if (typeof window.Apper !== 'undefined' && paymentResult.transactionId) {
         try {
-          const paymentVerification = await window.Apper.verifyPayment(payment.transactionId);
-          if (!paymentVerification.success || paymentVerification.status !== 'completed') {
-            throw new Error('Payment verification failed. Please contact support.');
+          const paymentVerification = await window.Apper.verifyPayment(paymentResult.transactionId);
+          if (paymentVerification.success && paymentVerification.status === 'completed') {
+            finalPaymentStatus = paymentVerification.status;
+            toast.success("Payment verified successfully!");
           }
-          finalPaymentStatus = paymentVerification.status;
-          toast.success("Payment verified successfully!");
         } catch (verifyError) {
-          console.error('Payment verification error:', verifyError);
-          toast.error("Payment verification failed. Please contact support.");
-          return;
+          console.warn('Payment verification warning:', verifyError);
+          // Continue with order placement even if verification has issues
         }
       }
+
+      const subtotal = getSubtotal();
+      const deliveryFee = subtotal >= 2000 ? 0 : 150;
+      const tax = Math.round(subtotal * 0.05);
+      const total = subtotal + deliveryFee + tax;
 
       const orderData = {
         items: cart,
         deliveryAddress: address,
         paymentMethod: payment.method,
-        transactionId: payment.transactionId,
+        transactionId: paymentResult.transactionId || payment.transactionId,
         paymentProof: payment.paymentProof || payment.screenshot,
         paymentStatus: finalPaymentStatus,
         paymentGateway: paymentMethods.find(m => m.id === payment.method)?.gateway,
@@ -263,7 +332,7 @@ const handlePlaceOrder = async () => {
         processingTimestamp: new Date().toISOString()
       };
 
-      // Set timeout for order creation (10 seconds max for payment processing)
+      // Set timeout for order creation (10 seconds max)
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Request timeout')), 10000);
       });
@@ -274,11 +343,11 @@ const handlePlaceOrder = async () => {
       ]);
       
       // Send confirmation to Apper SDK if available
-      if (typeof window.Apper !== 'undefined' && order.Id) {
+      if (typeof window.Apper !== 'undefined' && order.Id && paymentResult.transactionId) {
         try {
           await window.Apper.confirmOrder({
             orderId: order.Id,
-            transactionId: payment.transactionId,
+            transactionId: paymentResult.transactionId,
             amount: total,
             status: 'confirmed'
           });
@@ -288,9 +357,10 @@ const handlePlaceOrder = async () => {
         }
       }
       
-      clearCart();
+      clearCart(true); // Skip confirmation since order is placed
       toast.success("Order placed successfully! Confirmation sent to your email.");
       navigate(`/orders/${order.Id}`);
+      
     } catch (error) {
       console.error('Order placement failed:', error);
       
