@@ -247,11 +247,30 @@ const isInCart = useCallback((productId) => {
 return cart.find(item => (item.variantId || item.Id) === productId);
   }, [cart]);
 
-  const validateCart = useCallback(() => {
-    if (cart.length === 0) return false;
+const validateCart = useCallback(() => {
+    if (cart.length === 0) {
+      toast.error("Your cart is empty. Add some items to proceed.");
+      return false;
+    }
     
     // Check if all items have sufficient stock
-    return cart.every(item => hasStock(item.Id, item.quantity));
+    const invalidItems = cart.filter(item => !hasStock(item.variantId || item.Id, item.quantity));
+    
+    if (invalidItems.length > 0) {
+      invalidItems.forEach(item => {
+        toast.error(`${item.title} is out of stock or insufficient quantity available.`);
+      });
+      return false;
+    }
+    
+    // Check for any items with zero or negative quantity
+    const zeroQuantityItems = cart.filter(item => item.quantity <= 0);
+    if (zeroQuantityItems.length > 0) {
+      toast.error("Please remove items with zero quantity from your cart.");
+      return false;
+    }
+    
+    return true;
   }, [cart]);
 
   const hasStock = useCallback((productId, requestedQuantity = 1) => {
@@ -260,7 +279,8 @@ return cart.find(item => (item.variantId || item.Id) === productId);
     const cartItem = cart.find(item => (item.variantId || item.Id) === productId);
     if (!cartItem) return true;
     
-    return requestedQuantity <= 10; // Mock stock limit
+    // Mock stock validation - in real app, this would check against backend inventory
+    return requestedQuantity <= 10 && requestedQuantity > 0;
   }, [cart]);
 
 return {

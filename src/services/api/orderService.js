@@ -21,6 +21,15 @@ export const orderService = {
 async create(orderData) {
     await delay(500);
     
+    // Validate order data
+    if (!orderData.items || orderData.items.length === 0) {
+      throw new Error("Order must contain at least one item");
+    }
+    
+    if (!orderData.deliveryAddress || !orderData.paymentMethod) {
+      throw new Error("Delivery address and payment method are required");
+    }
+    
     // Import existing orders to calculate new ID
     const existingOrders = (await import('@/services/mockData/orders.json')).default;
     const newId = existingOrders && existingOrders.length > 0 
@@ -29,10 +38,22 @@ async create(orderData) {
     
     const newOrder = {
       Id: newId,
+      customerId: orderData.customerId || `cust_${Date.now()}`,
       status: orderData.status || "pending",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...orderData
+      items: orderData.items.map(item => ({
+        ...item,
+        vendorId: item.vendorId || 1
+      })),
+      deliveryAddress: orderData.deliveryAddress,
+      paymentMethod: orderData.paymentMethod,
+      transactionId: orderData.transactionId,
+      paymentProof: orderData.paymentProof || null,
+      subtotal: orderData.subtotal,
+      deliveryFee: orderData.deliveryFee,
+      tax: orderData.tax,
+      total: orderData.total
     };
     
     return { ...newOrder };

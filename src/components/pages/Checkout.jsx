@@ -10,7 +10,7 @@ import Card from "@/components/atoms/Card";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, getSubtotal, clearCart } = useCart();
+const { cart, getSubtotal, clearCart, validateCart } = useCart();
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirmation
@@ -34,17 +34,28 @@ const Checkout = () => {
   });
 
   // Handle cart validation and navigation after render
-  useEffect(() => {
+useEffect(() => {
     if (!cart || cart.length === 0) {
       setRedirecting(true);
+      toast.error("Your cart is empty. Please add items before checkout.");
       // Use setTimeout to ensure navigation happens after render
       const timer = setTimeout(() => {
         navigate("/cart", { replace: true });
       }, 0);
       
       return () => clearTimeout(timer);
+    } else {
+      // Validate cart when component loads
+      if (!validateCart()) {
+        setRedirecting(true);
+        const timer = setTimeout(() => {
+          navigate("/cart", { replace: true });
+        }, 1000); // Give user time to see validation errors
+        
+        return () => clearTimeout(timer);
+      }
     }
-  }, [cart, navigate]);
+  }, [cart, navigate, validateCart]);
 
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
@@ -110,12 +121,16 @@ const Checkout = () => {
   };
 
 // Show loading state while redirecting for empty cart
-  if (redirecting || !cart || cart.length === 0) {
+if (redirecting || !cart || cart.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to cart...</p>
+          <p className="text-gray-600">
+            {!cart || cart.length === 0 
+              ? "Cart is empty. Redirecting..." 
+              : "Validating cart items..."}
+          </p>
         </div>
       </div>
     );
