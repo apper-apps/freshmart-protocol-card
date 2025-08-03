@@ -156,31 +156,31 @@ e.stopPropagation();
           <div className="mb-3">
             <p className="text-xs text-gray-500 mb-2">Available variants:</p>
             <div className="flex flex-wrap gap-1">
-              {product.variants.slice(0, 3).map((variant, index) => (
+{product.variants.slice(0, 3).map((variant, index) => (
                 <button
                   key={index}
                   onClick={(e) => handleVariantChange(e, variant)}
-                  className={`px-2 py-1 text-xs rounded border transition-all duration-200 variant-button ${
+                  className={`min-h-[48px] px-3 py-2 text-xs rounded-lg border transition-all duration-300 variant-button-enhanced ${
                     selectedVariant === variant
-                      ? 'bg-primary-100 border-primary-400 text-primary-700 ring-1 ring-primary-300 transform scale-105 shadow-sm'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600'
+                      ? 'bg-primary-100 border-2 border-primary-500 text-primary-800 ring-2 ring-primary-200 transform scale-105 shadow-lg variant-selected'
+                      : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 hover:scale-102 active:scale-95'
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
                     {variant.size || variant.weight || variant.color || variant.count || variant.name}
                     {selectedVariant === variant && (
-                      <ApperIcon name="Check" size={10} className="text-primary-600" />
+                      <ApperIcon name="Check" size={12} className="text-primary-700 animate-scale-in" />
                     )}
                   </div>
                   {variant.priceModifier && variant.priceModifier !== 0 && (
-                    <div className="text-xs text-gray-500 mt-0.5">
+                    <div className="text-xs text-gray-500 mt-1 font-medium">
                       ({variant.priceModifier > 0 ? '+' : ''}RS {Math.abs(variant.priceModifier)})
                     </div>
                   )}
                 </button>
               ))}
               {product.variants.length > 3 && (
-                <span className="px-2 py-1 text-xs text-gray-400">
+                <span className="px-3 py-2 text-xs text-gray-400 min-h-[48px] flex items-center">
                   +{product.variants.length - 3} more
                 </span>
               )}
@@ -188,42 +188,42 @@ e.stopPropagation();
           </div>
         )}
 
-<div className="flex items-center gap-2 mb-4">
-          <span className="text-xl font-bold gradient-text transition-all duration-300">
+<div className="flex items-center flex-wrap gap-2 mb-4">
+          <span className="text-xl font-bold gradient-text transition-all duration-500 price-change-animation">
             RS {currentPrice.toLocaleString()}
           </span>
           {product.originalPrice && product.originalPrice > currentPrice && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-sm text-gray-500 line-through transition-opacity duration-300">
               RS {product.originalPrice.toLocaleString()}
             </span>
           )}
           {savings > 0 && (
-            <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full animate-scale-in">
-              Save RS {savings.toLocaleString()}
+            <span className="text-xs text-green-700 font-bold bg-gradient-to-r from-green-100 to-green-50 px-3 py-1.5 rounded-full border border-green-200 animate-bounce-subtle savings-badge">
+              💰 Save RS {savings.toLocaleString()}
             </span>
           )}
         </div>
 
 {/* Quantity selector for variants */}
 {selectedVariant && (
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-sm text-gray-600">Qty:</span>
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-sm text-gray-600 font-medium">Qty:</span>
+            <div className="flex items-center gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setQuantity(Math.max(1, quantity - 1));
                 }}
-                className={`w-6 h-6 flex items-center justify-center border rounded text-xs transition-all duration-200 ${
+                className={`min-w-[48px] min-h-[48px] flex items-center justify-center border rounded-lg text-sm transition-all duration-200 touch-target ${
                   quantity <= 1 
                     ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
-                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95'
+                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95 hover:shadow-md'
                 }`}
                 disabled={quantity <= 1}
               >
-                <ApperIcon name="Minus" size={12} />
+                <ApperIcon name="Minus" size={16} />
               </button>
-              <span className="w-8 text-center text-sm font-medium bg-surface-50 rounded px-1">
+              <span className="min-w-[48px] min-h-[36px] flex items-center justify-center text-base font-bold bg-surface-50 rounded-lg px-2 border">
                 {quantity}
               </span>
               <button
@@ -231,17 +231,17 @@ e.stopPropagation();
                   e.stopPropagation();
                   setQuantity(Math.min(product.stock, quantity + 1));
                 }}
-                className={`w-6 h-6 flex items-center justify-center border rounded text-xs transition-all duration-200 ${
+                className={`min-w-[48px] min-h-[48px] flex items-center justify-center border rounded-lg text-sm transition-all duration-200 touch-target ${
                   quantity >= product.stock 
                     ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed' 
-                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95'
+                    : 'hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 active:scale-95 hover:shadow-md'
                 }`}
                 disabled={quantity >= product.stock}
               >
-                <ApperIcon name="Plus" size={12} />
+                <ApperIcon name="Plus" size={16} />
               </button>
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 font-medium">
               (Stock: {product.stock})
             </span>
           </div>

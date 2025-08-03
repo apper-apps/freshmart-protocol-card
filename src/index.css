@@ -181,7 +181,150 @@ body {
 }
 
 .leaflet-control-attribution {
-  background-color: rgba(255, 255, 255, 0.8) !important;
+background-color: rgba(255, 255, 255, 0.8) !important;
   border-radius: 4px !important;
   font-size: 11px !important;
+}
+
+/* Mobile-First Touch Targets */
+.touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Enhanced Variant Button Styles */
+.variant-button-enhanced {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.variant-button-enhanced:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+}
+
+.variant-selected {
+  animation: variantPulse 0.6s ease-out;
+}
+
+@keyframes variantPulse {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(46, 125, 50, 0.1);
+  }
+  100% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+/* Price Change Animation */
+.price-change-animation {
+  animation: priceGlow 0.8s ease-in-out;
+}
+
+@keyframes priceGlow {
+  0% { 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% { 
+    transform: scale(1.05);
+    filter: brightness(1.2);
+  }
+  100% { 
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Savings Badge Animation */
+.savings-badge {
+  animation: savingsAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes savingsAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Navigation Enhancement */
+.nav-item-enhanced {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item-enhanced:active {
+  transition-duration: 0.1s;
+}
+
+/* Safe Area Support */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-padding {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Enhanced Hover States for Mobile */
+@media (hover: none) and (pointer: coarse) {
+  .variant-button-enhanced:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .nav-item-enhanced:hover {
+    transform: none;
+  }
+  
+  .touch-target:hover {
+    background-color: rgba(46, 125, 50, 0.05);
+  }
+}
+
+/* Improved Scroll Behavior */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scale Utility Classes */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+.hover\:scale-110:hover {
+  transform: scale(1.10);
 }

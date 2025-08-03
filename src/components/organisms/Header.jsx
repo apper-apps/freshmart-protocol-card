@@ -17,7 +17,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-surface-200 sticky top-0 z-50">
+<header className="bg-white shadow-sm border-b border-surface-200 sticky top-0 z-[60] safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -44,38 +44,38 @@ const Header = () => {
           {/* Actions */}
           <div className="flex items-center gap-2">
             {/* Search icon for mobile */}
-            <Button
+<Button
               variant="ghost"
               size="sm"
-              className="md:hidden p-2"
+              className="md:hidden min-w-[48px] min-h-[48px] p-3 touch-target"
               onClick={() => navigate("/categories")}
             >
               <ApperIcon name="Search" size={20} />
             </Button>
 
             {/* Cart */}
-            <Button
+<Button
               variant="ghost"
               size="sm"
-              className="relative p-2"
+              className="relative min-w-[48px] min-h-[48px] p-3 touch-target hover:bg-primary-100 active:scale-95"
               onClick={() => navigate("/cart")}
             >
-              <ApperIcon name="ShoppingCart" size={20} />
+              <ApperIcon name="ShoppingCart" size={22} />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-accent-500 to-accent-400 text-gray-900 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-accent-500 to-accent-400 text-gray-900 text-xs rounded-full min-w-[24px] min-h-[24px] flex items-center justify-center font-bold animate-bounce-subtle">
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
             </Button>
 
             {/* Account */}
-            <Button
+<Button
               variant="ghost"
               size="sm"
-              className="p-2"
+              className="min-w-[48px] min-h-[48px] p-3 touch-target hover:bg-primary-100 active:scale-95"
               onClick={() => navigate("/account")}
             >
-              <ApperIcon name="User" size={20} />
+              <ApperIcon name="User" size={22} />
             </Button>
           </div>
         </div>

@@ -5,10 +5,10 @@ import BottomNavigation from "@/components/organisms/BottomNavigation";
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-surface-200">
+<div className="min-h-screen bg-surface-200">
       <Header />
       
-      <main className="pb-20">
+      <main className="pb-24 safe-padding">
         <Outlet />
       </main>
       

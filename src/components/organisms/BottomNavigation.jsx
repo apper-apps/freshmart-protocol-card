@@ -21,40 +21,40 @@ const navItems = [
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-surface-200 z-50 pb-safe">
-      <div className="flex items-center justify-around px-2 py-2">
+<nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-surface-200 z-[60] pb-safe safe-bottom">
+      <div className="flex items-center justify-around px-2 py-3">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           
           return (
-            <button
+<button
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1",
+                "flex flex-col items-center gap-1 px-3 py-3 rounded-xl transition-all duration-300 min-w-0 flex-1 min-h-[64px] touch-target nav-item-enhanced",
                 isActive
-                  ? "text-primary-700 bg-primary-50 transform scale-105"
-                  : "text-gray-600 hover:text-primary-600 hover:bg-primary-50"
+                  ? "text-primary-800 bg-primary-100 transform scale-110 shadow-lg border-2 border-primary-200"
+                  : "text-gray-600 hover:text-primary-600 hover:bg-primary-50 hover:scale-105 active:scale-95"
               )}
             >
               <div className="relative">
                 <ApperIcon 
                   name={item.icon} 
-                  size={20} 
+                  size={22} 
                   className={cn(
-                    "transition-colors duration-200",
-                    isActive && "text-primary-700"
+                    "transition-all duration-300",
+                    isActive && "text-primary-800 drop-shadow-sm"
                   )} 
                 />
                 {item.badge > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-accent-500 to-accent-400 text-gray-900 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-accent-500 to-accent-400 text-gray-900 text-xs rounded-full min-w-[20px] min-h-[20px] flex items-center justify-center font-bold animate-pulse">
                     {item.badge > 99 ? "99+" : item.badge}
                   </span>
                 )}
               </div>
               <span className={cn(
-                "text-xs font-medium truncate",
-                isActive && "text-primary-700"
+                "text-xs font-semibold truncate transition-colors duration-300",
+                isActive && "text-primary-800"
               )}>
                 {item.label}
               </span>
