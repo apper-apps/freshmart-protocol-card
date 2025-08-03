@@ -46,16 +46,41 @@ const POSCheckout = () => {
   };
 
   // Barcode Scanner Functions
-  const startScanner = async () => {
+const startScanner = async () => {
     try {
+      // Check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error('Camera not supported in this browser. Please use manual barcode entry below.');
+        return;
+      }
+
+      // Check permission status if supported
+      if (navigator.permissions) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'denied') {
+            toast.error('Camera access denied. Please enable camera permissions in your browser settings.');
+            return;
+          }
+        } catch (permErr) {
+          // Permission API not supported, continue with getUserMedia
+          console.log('Permission API not supported:', permErr);
+        }
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
         setScannerActive(true);
+        toast.success('Scanner started successfully');
         
         // Start scanning interval
         intervalRef.current = setInterval(() => {
@@ -63,8 +88,49 @@ const POSCheckout = () => {
         }, 1000);
       }
     } catch (err) {
-      toast.error('Camera access denied or not available');
       console.error('Scanner error:', err);
+      
+      // Handle specific error types
+      if (err.name === 'NotAllowedError') {
+        toast.error(
+          'Camera permission denied. Please:\n' +
+          '1. Click the camera icon in your address bar\n' +
+          '2. Select "Allow" for camera access\n' +
+          '3. Refresh the page and try again\n\n' +
+          'Or use manual barcode entry below.',
+          { autoClose: 8000 }
+        );
+      } else if (err.name === 'NotFoundError') {
+        toast.error('No camera found. Please use manual barcode entry below.');
+      } else if (err.name === 'NotReadableError') {
+        toast.error('Camera is already in use by another application. Please close other camera apps and try again.');
+      } else if (err.name === 'OverconstrainedError') {
+        toast.error('Camera constraints not supported. Trying with basic settings...');
+        // Retry with basic constraints
+        try {
+          const basicStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+            videoRef.current.srcObject = basicStream;
+            videoRef.current.play();
+            setScannerActive(true);
+            toast.success('Scanner started with basic settings');
+            intervalRef.current = setInterval(() => {
+              scanBarcode();
+            }, 1000);
+          }
+        } catch (retryErr) {
+          toast.error('Camera access failed. Please use manual barcode entry below.');
+        }
+      } else if (err.name === 'SecurityError') {
+        toast.error(
+          'Camera access blocked by security policy. Please:\n' +
+          '1. Ensure you\'re using HTTPS (not HTTP)\n' +
+          '2. Check browser security settings\n' +
+          '3. Use manual barcode entry below as alternative'
+        );
+      } else {
+        toast.error('Camera access failed: ' + (err.message || 'Unknown error') + '. Please use manual barcode entry below.');
+      }
     }
   };
 
