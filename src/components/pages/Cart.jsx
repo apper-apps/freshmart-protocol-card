@@ -1,20 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import CartItem from "@/components/molecules/CartItem";
 import Empty from "@/components/ui/Empty";
+import Checkout from "@/components/pages/Checkout";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
 const Cart = () => {
 const navigate = useNavigate();
-const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasStock } = useCart();
+const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasStock, isProcessingQueue } = useCart();
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
   const tax = Math.round(subtotal * 0.05); // 5% tax
-const total = subtotal + deliveryFee + tax;
+  const total = subtotal + deliveryFee + tax;
+  
+  // Enhanced cart validation
+  const [validationErrors, setValidationErrors] = useState([]);
+  
+  useEffect(() => {
+    const errors = validateCart();
+    setValidationErrors(errors);
+  }, [cart, validateCart]);
 
 const handleCheckout = () => {
     // Validate cart before proceeding
@@ -51,17 +60,20 @@ if (cart.length === 0) {
         <h1 className="text-2xl font-bold font-display text-gray-900">
           Shopping Cart ({getTotalItems()} items)
         </h1>
-        <Button
+<Button
           variant="ghost"
           size="sm"
-onClick={() => clearCart(false)}
-          disabled={loading || cart.length === 0}
-          className={`text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 ${loading || cart.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+          onClick={() => clearCart(false)}
+          disabled={loading || isProcessingQueue || cart.length === 0}
+          className={`text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 focus:ring-2 focus:ring-red-200 ${
+            loading || isProcessingQueue || cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:scale-105 active:scale-95"
+          }`}
+          aria-label={`Clear all ${getTotalItems()} items from cart`}
         >
-          {loading ? (
+          {loading || isProcessingQueue ? (
             <>
-              <div className="w-4 h-4 border border-red-300 border-t-red-600 rounded-full animate-spin mr-2"></div>
-              Clearing...
+              <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin mr-2"></div>
+              {loading ? 'Clearing...' : 'Processing...'}
             </>
           ) : (
             <>
@@ -75,9 +87,34 @@ onClick={() => clearCart(false)}
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-{cart.map((item) => (
-            <CartItem key={item.variantId || item.Id} item={item} />
-          ))}
+{validationErrors.length > 0 && (
+            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-center mb-2">
+                <ApperIcon name="AlertTriangle" size={16} className="text-orange-600 mr-2" />
+                <span className="text-sm font-medium text-orange-800">Cart Issues Detected</span>
+              </div>
+              <ul className="text-sm text-orange-700 space-y-1">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          <div className="space-y-3">
+            {cart.map((item, index) => (
+              <div 
+                key={item.variantId || item.Id} 
+                data-cart-item={item.variantId || item.Id}
+                className={`cart-item-enter transition-all duration-200 ${
+                  isProcessingQueue ? 'opacity-75 pointer-events-none' : ''
+                }`}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <CartItem item={item} />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Order Summary */}

@@ -412,26 +412,217 @@ background-color: rgba(255, 255, 255, 0.8) !important;
 }
 
 /* Cart Item Removal Animation */
+/* Enhanced Cart Item Animations */
 .cart-item-removing {
-  animation: cartItemRemove 0.5s ease-out forwards;
+  animation: cartItemRemove 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
 }
 
 @keyframes cartItemRemove {
   0% {
     opacity: 1;
-    transform: scale(1) translateX(0);
+    transform: scale(1) translateX(0) rotateX(0deg);
     max-height: 200px;
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 0.8;
+    transform: scale(0.98) translateX(-5px) rotateX(-2deg);
+    filter: brightness(0.95);
   }
   50% {
     opacity: 0.5;
-    transform: scale(0.95) translateX(-20px);
+    transform: scale(0.95) translateX(-15px) rotateX(-5deg);
+    filter: brightness(0.8);
+  }
+  75% {
+    opacity: 0.2;
+    transform: scale(0.9) translateX(-30px) rotateX(-10deg);
+    max-height: 100px;
+    filter: brightness(0.6);
   }
   100% {
     opacity: 0;
-    transform: scale(0.9) translateX(-50px);
+    transform: scale(0.85) translateX(-50px) rotateX(-15deg);
     max-height: 0;
     margin: 0;
     padding: 0;
+    filter: brightness(0.4);
+  }
+}
+
+/* Enhanced Cart Item Entry */
+.cart-item-enter {
+  animation: cartItemEnter 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes cartItemEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9) rotateX(10deg);
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.02) rotateX(-2deg);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
+
+/* Quantity Button Enhanced Feedback */
+.quantity-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.quantity-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.1;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.quantity-btn:active::before {
+  width: 100px;
+  height: 100px;
+}
+
+.quantity-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.quantity-btn:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.1s;
+}
+
+/* Delete Button Enhanced Feedback */
+.delete-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.1;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.delete-btn:active::before {
+  width: 120px;
+  height: 120px;
+}
+
+.delete-btn:hover {
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.25);
+}
+
+.delete-btn:active {
+  transform: translateY(0) scale(0.95);
+  transition-duration: 0.1s;
+}
+
+/* Enhanced Loading Indicators */
+.quantity-loading {
+  animation: quantityPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes quantityPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Cart Operation Feedback */
+.cart-operation-feedback {
+  animation: operationFeedback 0.8s ease-out;
+}
+
+@keyframes operationFeedback {
+  0% {
+    background-color: rgba(76, 175, 80, 0);
+    transform: scale(1);
+  }
+  50% {
+    background-color: rgba(76, 175, 80, 0.1);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: rgba(76, 175, 80, 0);
+    transform: scale(1);
+  }
+}
+
+/* Stock Warning Animation */
+.stock-warning {
+  animation: stockWarning 2s ease-in-out infinite;
+}
+
+@keyframes stockWarning {
+  0%, 100% {
+    color: #f59e0b;
+    transform: scale(1);
+  }
+  50% {
+    color: #d97706;
+    transform: scale(1.05);
+  }
+}
+
+/* Cart Item Highlight on Update */
+.cart-item-updated {
+  animation: itemUpdated 1s ease-out;
+}
+
+@keyframes itemUpdated {
+  0% {
+    background-color: rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+  25% {
+    background-color: rgba(34, 197, 94, 0.1);
+    transform: scale(1.01);
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.05);
+    transform: scale(1.005);
+  }
+  100% {
+    background-color: rgba(34, 197, 94, 0);
+    transform: scale(1);
   }
 }
 
