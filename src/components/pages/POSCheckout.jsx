@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { orderService } from "@/services/api/orderService";
+import orderService from "@/services/api/orderService";
 import { productService } from "@/services/api/productService";
 import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
