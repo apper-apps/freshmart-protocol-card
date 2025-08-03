@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "react-toastify";
+import orderService from "@/services/api/orderService";
 import ApperIcon from "@/components/ApperIcon";
 import CartItem from "@/components/molecules/CartItem";
 import Empty from "@/components/ui/Empty";
 import Checkout from "@/components/pages/Checkout";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
-
 const Cart = () => {
 const navigate = useNavigate();
 const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasStock, isProcessingQueue } = useCart();
@@ -27,17 +27,14 @@ useEffect(() => {
 
 const handleCheckout = async () => {
     try {
-      // Validate cart before proceeding
-      const isValid = await validateCart();
-      if (!isValid) {
-        return;
-      }
-
+      // Validate cart before proceeding using orderService
+      await orderService.validateCart(cart);
+      
       // Navigate to checkout page
       navigate("/checkout");
     } catch (error) {
       console.error('Checkout validation error:', error);
-      toast.error("Failed to validate cart. Please try again.");
+      toast.error(`Cart validation failed: ${error.message}`);
     }
   };
 

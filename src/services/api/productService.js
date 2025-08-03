@@ -75,26 +75,6 @@ export const productService = {
     return enhanceProductData([...results]);
   },
 
-  async getByCategory(categoryId) {
-    await delay(300);
-    const categoryIdNum = parseInt(categoryId);
-    return productData.filter(p => p.categoryId === categoryIdNum);
-  },
-
-  async getFeatured() {
-    await delay(300);
-    return productData.filter(p => p.isFeatured || p.isBestseller).slice(0, 8);
-  },
-
-  async search(query) {
-    await delay(400);
-    const searchTerm = query.toLowerCase();
-    return productData.filter(p => 
-      p.title.toLowerCase().includes(searchTerm) ||
-      p.description.toLowerCase().includes(searchTerm) ||
-      p.category.toLowerCase().includes(searchTerm)
-    );
-  },
 
 async create(newProductData) {
     await delay(500);

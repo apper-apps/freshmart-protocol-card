@@ -276,8 +276,12 @@ const handlePaymentSubmit = async (e) => {
       }
 
       // Final cart validation before order placement
-      const isValid = await validateCart();
-      if (!isValid) {
+// Final cart validation before order placement
+      try {
+        await orderService.validateCart(cart);
+      } catch (validationError) {
+        console.error('Final cart validation failed:', validationError);
+        toast.error(`Cart validation failed: ${validationError.message}`);
         setRedirecting(true);
         setTimeout(() => navigate("/cart", { replace: true }), 1000);
         return;

@@ -339,9 +339,18 @@ const processSale = useCallback(async () => {
     try {
       setLoading(true);
       
+      // Validate cart before processing sale
+      try {
+        await orderService.validateCart(cart);
+      } catch (validationError) {
+        toast.error(`Sale error: ${validationError.message}`);
+        return;
+      }
+      
       // Create order
       const orderData = {
         items: cart.map(item => ({
+          Id: item.Id,
           productId: item.Id,
           quantity: item.quantity,
           price: item.price,
@@ -378,8 +387,12 @@ const processSale = useCallback(async () => {
       // Reload products to update stock
       await loadProducts();
       
-} catch (err) {
-      toast.error('Sale processing failed');
+    } catch (err) {
+      if (err.message && err.message.includes('Cart validation failed')) {
+        toast.error(`Sale error: ${err.message}`);
+      } else {
+        toast.error('Sale processing failed');
+      }
       console.error('Sale error:', err);
     } finally {
       setLoading(false);
