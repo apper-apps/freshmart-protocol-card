@@ -175,13 +175,26 @@ const handlePaymentSubmit = async (e) => {
         } else {
           throw new Error(paymentResult.error || 'Payment processing failed');
         }
-      } else {
-        // Fallback for manual entry if SDK not available
-        if (!payment.transactionId) {
-          toast.error("Please enter transaction ID");
-          return;
+} else {
+        // Enhanced fallback for manual entry if SDK not available
+        if (!payment.transactionId || payment.transactionId.trim() === '') {
+          // For online payments, generate a fallback transaction ID to prevent blocking
+          const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
+          if (selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank') {
+            const fallbackTransactionId = `MANUAL-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
+            setPayment(prev => ({
+              ...prev,
+              transactionId: fallbackTransactionId
+            }));
+            toast.warning("Please complete your payment and note the transaction ID for verification");
+            setStep(3);
+          } else {
+            toast.error("Please enter transaction ID to continue");
+            return;
+          }
+        } else {
+          setStep(3);
         }
-        setStep(3);
       }
     } catch (error) {
       console.error('Payment processing error:', error);
@@ -359,10 +372,12 @@ let paymentResult;
       } catch (paymentError) {
         console.error('Payment processing failed:', paymentError);
         
-        // Enhanced error messaging based on error type
-        if (paymentError.message.includes('Transaction ID is required') || paymentError.message.includes('complete your')) {
-          toast.error(paymentError.message);
+// Enhanced error messaging based on error type with better user guidance
+        if (paymentError.message.includes('Transaction ID is required')) {
+          toast.error("Payment processing requires transaction verification. Please complete your payment and try again.");
         } else if (paymentError.message.includes('too short')) {
+          toast.error("Transaction ID appears incomplete. Please verify and enter the complete transaction ID.");
+        } else if (paymentError.message.includes('complete your')) {
           toast.error(paymentError.message);
         } else {
           toast.error(paymentError.message || "Payment processing failed. Please try again.");

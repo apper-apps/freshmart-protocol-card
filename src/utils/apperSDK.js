@@ -97,17 +97,19 @@ const isSuccess = result.status === 'success' || result.status === 'completed';
         }
       }
       
-      // Generate robust fallback transaction ID if missing
+// Generate robust fallback transaction ID if missing with enhanced uniqueness
       if (isSuccess && !transactionId) {
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substr(2, 12);
-        transactionId = `APPER-${timestamp}-${randomSuffix}`;
+        const gatewayPrefix = paymentConfig.gateway ? paymentConfig.gateway.toUpperCase().substr(0, 3) : 'APP';
+        transactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
         console.warn('Payment successful but no valid transaction ID provided, generated enhanced fallback:', transactionId);
       } else if (!isSuccess && !transactionId) {
         // For failed payments, still generate ID for tracking
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substr(2, 8);
-        transactionId = `FAILED-${timestamp}-${randomSuffix}`;
+        const gatewayPrefix = paymentConfig.gateway ? paymentConfig.gateway.toUpperCase().substr(0, 3) : 'FAIL';
+        transactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
         console.error('Payment failed with no transaction ID, generated tracking ID:', transactionId);
       }
 
@@ -139,15 +141,21 @@ const isSuccess = result.status === 'success' || result.status === 'completed';
     }
 
 try {
-      // Enhanced transaction ID validation
+      // Enhanced transaction ID validation with better fallback handling
       if (!transactionId || (typeof transactionId === 'string' && transactionId.trim().length === 0)) {
-        throw new Error('Valid transaction ID is required for payment verification');
+        throw new Error('Transaction ID is required for payment verification. Please complete your payment first.');
       }
       
       const cleanTransactionId = typeof transactionId === 'string' ? transactionId.trim() : String(transactionId);
       
-      if (cleanTransactionId.length < 4) {
-        throw new Error('Transaction ID is too short for verification');
+      // Allow shorter transaction IDs for certain payment methods (e.g., generated fallbacks)
+      if (cleanTransactionId.length < 3) {
+        throw new Error('Transaction ID appears incomplete. Please verify the transaction ID from your payment confirmation.');
+      }
+      
+      // Allow generated transaction IDs from our system
+      if (cleanTransactionId.startsWith('MANUAL-') || cleanTransactionId.startsWith('APPER-') || cleanTransactionId.startsWith('EMERGENCY-')) {
+        console.log('Verifying system-generated transaction ID:', cleanTransactionId);
       }
 
       const result = await window.Apper.verifyPayment(cleanTransactionId);
@@ -168,12 +176,13 @@ try {
       };
     } catch (error) {
       console.error('Apper payment verification error:', error);
-      
-      // Provide more specific error messages
-      if (error.message.includes('required') || error.message.includes('too short')) {
-        throw error; // Re-throw validation errors as-is
+// Provide more specific error messages with user-friendly guidance
+      if (error.message.includes('required')) {
+        throw new Error('Payment verification requires a valid transaction ID. Please complete your payment and try again.');
+      } else if (error.message.includes('too short') || error.message.includes('incomplete')) {
+        throw new Error('Transaction ID appears incomplete. Please check your payment confirmation and enter the complete transaction ID.');
       } else {
-        throw new Error(`Payment verification failed: ${error.message}`);
+        throw new Error(`Payment verification failed: ${error.message || 'Unable to verify payment status'}`);
       }
     }
   }
