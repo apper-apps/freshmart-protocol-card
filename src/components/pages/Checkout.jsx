@@ -35,8 +35,9 @@ const { cart, getSubtotal, clearCart, validateCart } = useCart();
 
   // Handle cart validation and navigation after render
 useEffect(() => {
-    // Redirection guard - prevent infinite loops
-    if (window.location.pathname.includes('redirecting')) {
+    // Enhanced redirection guard - prevent infinite loops
+    if (window.location.pathname.includes('redirecting') || window.location.search.includes('redirect=true')) {
+      toast.error('Redirecting to cart to resolve navigation issue');
       window.location.href = '/cart';
       return;
     }

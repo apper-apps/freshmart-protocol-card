@@ -7,7 +7,7 @@ import Card from "@/components/atoms/Card";
 const CartItem = ({ item }) => {
 const { updateQuantity, removeFromCart, loading } = useCart();
 
-  const handleQuantityChange = async (newQuantity) => {
+const handleQuantityChange = async (newQuantity) => {
     if (newQuantity === 0) {
       const itemId = item.variantId || item.Id;
       await removeFromCart(itemId);
@@ -17,8 +17,9 @@ const { updateQuantity, removeFromCart, loading } = useCart();
     }
   };
   
-  const handleRemoveItem = async () => {
-    const confirmed = window.confirm(`Remove ${item.displayName || item.title} from cart?`);
+const handleRemoveItem = async () => {
+    const itemName = item.displayName || item.title;
+    const confirmed = window.confirm(`Remove ${itemName} from cart?`);
     if (confirmed) {
       const itemId = item.variantId || item.Id;
       await removeFromCart(itemId);
@@ -54,23 +55,25 @@ const { updateQuantity, removeFromCart, loading } = useCart();
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity - 1)}
-                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity <= 1 || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600"}`}
-                            disabled={item.quantity <= 1 || loading}>
+                            className={`quantity-btn w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity <= 1 || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600 hover:scale-105"}`}
+                            disabled={item.quantity <= 1 || loading}
+                            data-item-id={item.variantId || item.Id}>
                             {loading ? (
                                 <div className="w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                             ) : (
                                 <ApperIcon name="Minus" size={14} />
                             )}
                         </Button>
-                        <span className="w-10 text-center font-medium bg-surface-50 rounded px-2 py-1">
+                        <span className="w-10 text-center font-medium bg-surface-50 rounded px-2 py-1 cart-bounce">
                             {item.quantity}
                         </span>
-<Button
+                        <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity + 1)}
-                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity >= (item.stock || 99) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600"}`}
-                            disabled={item.quantity >= (item.stock || 99) || loading}>
+                            className={`quantity-btn increase w-8 h-8 p-0 transition-all duration-200 touch-target ${item.quantity >= (item.stock || 99) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600 hover:scale-105"}`}
+                            disabled={item.quantity >= (item.stock || 99) || loading}
+                            data-item-id={item.variantId || item.Id}>
                             {loading ? (
                                 <div className="w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
                             ) : (
@@ -80,11 +83,12 @@ const { updateQuantity, removeFromCart, loading } = useCart();
                     </div>
                 </div>
 <Button
-                    variant="ghost"
+variant="ghost"
                     size="sm"
                     onClick={handleRemoveItem}
                     disabled={loading}
-                    className={`text-red-600 hover:text-red-700 hover:bg-red-50 p-2 transition-all duration-200 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    className={`delete-btn text-red-600 hover:text-red-700 hover:bg-red-50 p-2 transition-all duration-200 touch-target hover:scale-105 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                    data-item-id={item.variantId || item.Id}>
                     {loading ? (
                         <div className="w-4 h-4 border border-red-300 border-t-red-600 rounded-full animate-spin"></div>
                     ) : (

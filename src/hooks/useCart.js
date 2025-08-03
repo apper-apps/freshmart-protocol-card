@@ -180,17 +180,21 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
               queueToast('warning', `Only ${maxStock} items available in stock`);
               return item;
             }
+            // Enhanced feedback for quantity updates
+            queueToast('success', `Quantity updated to ${newQuantity}`);
             return { ...item, quantity: newQuantity };
           }
           return item;
         });
         
-        // Deferred localStorage write
+        // Enhanced localStorage handling with error recovery
         requestAnimationFrame(() => {
           try {
             localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
+            queueToast('info', 'Cart updated successfully');
           } catch (error) {
             console.error('Error saving cart:', error);
+            queueToast('error', 'Failed to save cart changes');
           }
           setLoading(false);
           resolve();
