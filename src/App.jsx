@@ -1,19 +1,21 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import "@/index.css";
 import Layout from "@/components/organisms/Layout";
+import DeliveryApp from "@/components/pages/DeliveryApp";
+import OrderDetail from "@/components/pages/OrderDetail";
+import VendorDashboard from "@/components/pages/VendorDashboard";
+import Orders from "@/components/pages/Orders";
+import Account from "@/components/pages/Account";
+import Checkout from "@/components/pages/Checkout";
 import Home from "@/components/pages/Home";
 import Categories from "@/components/pages/Categories";
 import ProductDetail from "@/components/pages/ProductDetail";
 import Cart from "@/components/pages/Cart";
-import Checkout from "@/components/pages/Checkout";
-import Orders from "@/components/pages/Orders";
-import OrderDetail from "@/components/pages/OrderDetail";
-import Account from "@/components/pages/Account";
-import VendorDashboard from "@/components/pages/VendorDashboard";
 import AdminDashboard from "@/components/pages/AdminDashboard";
 import POSCheckout from "@/components/pages/POSCheckout";
-import DeliveryApp from "@/components/pages/DeliveryApp";
+
 function App() {
 return (
     <BrowserRouter>
@@ -37,18 +39,14 @@ return (
           </Route>
         </Routes>
         
-        <ToastContainer
+<Toaster
           position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          style={{ zIndex: 9999 }}
+          toastOptions={{
+            duration: 3000,
+            style: {
+              zIndex: 9999,
+            },
+          }}
         />
       </div>
     </BrowserRouter>
