@@ -15,10 +15,10 @@ import AdminDashboard from "@/components/pages/AdminDashboard";
 import POSCheckout from "@/components/pages/POSCheckout";
 import DeliveryApp from "@/components/pages/DeliveryApp";
 function App() {
-  return (
+return (
     <BrowserRouter>
-<div className="min-h-screen bg-surface-200">
-<Routes>
+      <div className="min-h-screen bg-surface-200">
+        <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="categories" element={<Categories />} />

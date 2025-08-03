@@ -19,7 +19,13 @@ export const orderService = {
   },
 
 async create(orderData) {
-    await delay(500);
+    // Simulate network delay with potential failure
+    await delay(Math.random() > 0.95 ? 6000 : 800); // 5% chance of timeout
+    
+    // Simulate network failure
+    if (Math.random() > 0.98) { // 2% chance of network failure
+      throw new Error("Network error occurred");
+    }
     
     // Validate order data
     if (!orderData.items || orderData.items.length === 0) {
@@ -28,6 +34,33 @@ async create(orderData) {
     
     if (!orderData.deliveryAddress || !orderData.paymentMethod) {
       throw new Error("Delivery address and payment method are required");
+    }
+
+    if (!orderData.transactionId && orderData.paymentMethod !== 'cash') {
+      throw new Error("Transaction ID is required for electronic payments");
+    }
+    
+    // Validate stock availability
+    try {
+      const products = (await import('@/services/mockData/products.json')).default;
+      
+      for (const item of orderData.items) {
+        const product = products.find(p => p.Id === item.Id);
+        if (!product) {
+          throw new Error(`Product "${item.title}" is no longer available`);
+        }
+        if (!product.isActive) {
+          throw new Error(`Product "${item.title}" is currently unavailable`);
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(`Insufficient stock for "${item.title}". Only ${product.stock} units available`);
+        }
+      }
+    } catch (error) {
+      if (error.message.includes('stock') || error.message.includes('available')) {
+        throw error;
+      }
+      throw new Error("Failed to validate product availability");
     }
     
     // Import existing orders to calculate new ID
@@ -55,6 +88,14 @@ async create(orderData) {
       tax: orderData.tax,
       total: orderData.total
     };
+    
+    // Log successful order creation for monitoring
+    console.log(`Order ${newId} created successfully:`, {
+      customerId: newOrder.customerId,
+      itemCount: newOrder.items.length,
+      total: newOrder.total,
+      timestamp: newOrder.createdAt
+    });
     
     return { ...newOrder };
   },

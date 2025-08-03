@@ -35,27 +35,63 @@ const { cart, getSubtotal, clearCart, validateCart } = useCart();
 
   // Handle cart validation and navigation after render
 useEffect(() => {
+    // Redirection guard - prevent infinite loops
+    if (window.location.pathname.includes('redirecting')) {
+      window.location.href = '/cart';
+      return;
+    }
+
     if (!cart || cart.length === 0) {
       setRedirecting(true);
       toast.error("Your cart is empty. Please add items before checkout.");
       // Use setTimeout to ensure navigation happens after render
       const timer = setTimeout(() => {
         navigate("/cart", { replace: true });
-      }, 0);
+      }, 100);
       
       return () => clearTimeout(timer);
     } else {
-      // Validate cart when component loads
-      if (!validateCart()) {
+      // Validate cart when component loads with stock checking
+      if (!validateCartWithStock()) {
         setRedirecting(true);
         const timer = setTimeout(() => {
           navigate("/cart", { replace: true });
-        }, 1000); // Give user time to see validation errors
+        }, 1500); // Give user time to see validation errors
         
         return () => clearTimeout(timer);
       }
     }
-  }, [cart, navigate, validateCart]);
+  }, [cart, navigate]);
+
+  // Enhanced cart validation with stock checking
+  const validateCartWithStock = async () => {
+    if (!cart || cart.length === 0) return false;
+    
+    try {
+      // Import products data for stock validation
+      const products = (await import('@/services/mockData/products.json')).default;
+      
+      for (const item of cart) {
+        const product = products.find(p => p.Id === item.Id);
+        if (!product) {
+          toast.error(`Product "${item.title}" is no longer available`);
+          return false;
+        }
+        if (!product.isActive) {
+          toast.error(`Product "${item.title}" is currently unavailable`);
+          return false;
+        }
+        if (product.stock < item.quantity) {
+          toast.error(`Only ${product.stock} units of "${item.title}" are available`);
+          return false;
+        }
+      }
+      return true;
+    } catch (error) {
+      toast.error("Failed to validate cart. Please try again.");
+      return false;
+    }
+  };
 
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
@@ -87,10 +123,24 @@ useEffect(() => {
     setStep(3);
   };
 
-  const handlePlaceOrder = async () => {
+const handlePlaceOrder = async () => {
     try {
       setLoading(true);
       
+      // Check network connectivity
+      if (!navigator.onLine) {
+        toast.error("No internet connection. Please check your network and try again later.");
+        return;
+      }
+
+      // Final cart validation before order placement
+      const isValid = await validateCartWithStock();
+      if (!isValid) {
+        setRedirecting(true);
+        setTimeout(() => navigate("/cart", { replace: true }), 1000);
+        return;
+      }
+
       const orderData = {
         items: cart,
         deliveryAddress: address,
@@ -103,13 +153,33 @@ useEffect(() => {
         total
       };
 
-      const order = await orderService.create(orderData);
+      // Set timeout for order creation (5 seconds max)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 5000);
+      });
+
+      const order = await Promise.race([
+        orderService.create(orderData),
+        timeoutPromise
+      ]);
       
       clearCart();
       toast.success("Order placed successfully!");
       navigate(`/orders/${order.Id}`);
     } catch (error) {
-      toast.error("Failed to place order. Please try again.");
+      console.error('Order placement failed:', error);
+      
+      if (error.message === 'Request timeout') {
+        toast.error("Request timed out. Please try again later.");
+      } else if (error.message.includes('stock')) {
+        toast.error("Some items went out of stock. Please review your cart.");
+        setRedirecting(true);
+        setTimeout(() => navigate("/cart", { replace: true }), 1000);
+      } else if (!navigator.onLine) {
+        toast.error("Connection lost. Please try again when online.");
+      } else {
+        toast.error("Failed to place order. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -120,16 +190,19 @@ useEffect(() => {
     toast.success("Account number copied!");
   };
 
-// Show loading state while redirecting for empty cart
-if (redirecting || !cart || cart.length === 0) {
+  // Show loading state while redirecting for empty cart with timeout
+  if (redirecting || !cart || cart.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
+        <div className="text-center max-w-sm mx-auto px-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-sm mb-2">
             {!cart || cart.length === 0 
               ? "Cart is empty. Redirecting..." 
               : "Validating cart items..."}
+          </p>
+          <p className="text-gray-400 text-xs">
+            This should only take a moment
           </p>
         </div>
       </div>
