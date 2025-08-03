@@ -5,18 +5,24 @@ import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
 const CartItem = ({ item }) => {
-  const { updateQuantity, removeFromCart } = useCart();
+const { updateQuantity, removeFromCart, loading } = useCart();
 
-const handleQuantityChange = (newQuantity) => {
+  const handleQuantityChange = async (newQuantity) => {
     if (newQuantity === 0) {
-      removeFromCart(item.variantId || item.Id);
+      const itemId = item.variantId || item.Id;
+      await removeFromCart(itemId);
     } else {
-      updateQuantity(item.variantId || item.Id, newQuantity);
+      const itemId = item.variantId || item.Id;
+      await updateQuantity(itemId, newQuantity);
     }
   };
-
-  const handleRemoveItem = () => {
-    removeFromCart(item.variantId || item.Id);
+  
+  const handleRemoveItem = async () => {
+    const confirmed = window.confirm(`Remove ${item.displayName || item.title} from cart?`);
+    if (confirmed) {
+      const itemId = item.variantId || item.Id;
+      await removeFromCart(itemId);
+    }
   };
 
   return (
@@ -44,33 +50,46 @@ const handleQuantityChange = (newQuantity) => {
                 </span>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
-                        <Button
+<Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity - 1)}
-                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity <= 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600"}`}
-                            disabled={item.quantity <= 1}>
-                            <ApperIcon name="Minus" size={14} />
+                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity <= 1 || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-red-50 hover:border-red-300 hover:text-red-600"}`}
+                            disabled={item.quantity <= 1 || loading}>
+                            {loading ? (
+                                <div className="w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                            ) : (
+                                <ApperIcon name="Minus" size={14} />
+                            )}
                         </Button>
                         <span className="w-10 text-center font-medium bg-surface-50 rounded px-2 py-1">
                             {item.quantity}
                         </span>
-                        <Button
+<Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleQuantityChange(item.quantity + 1)}
-                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity >= (item.stock || 99) ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600"}`}
-                            disabled={item.quantity >= (item.stock || 99)}>
-                            <ApperIcon name="Plus" size={14} />
+                            className={`w-8 h-8 p-0 transition-all duration-200 ${item.quantity >= (item.stock || 99) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-50 hover:border-primary-300 hover:text-primary-600"}`}
+                            disabled={item.quantity >= (item.stock || 99) || loading}>
+                            {loading ? (
+                                <div className="w-3 h-3 border border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                            ) : (
+                                <ApperIcon name="Plus" size={14} />
+                            )}
                         </Button>
                     </div>
                 </div>
-                <Button
+<Button
                     variant="ghost"
                     size="sm"
                     onClick={handleRemoveItem}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2">
-                    <ApperIcon name="Trash2" size={16} />
+                    disabled={loading}
+                    className={`text-red-600 hover:text-red-700 hover:bg-red-50 p-2 transition-all duration-200 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}>
+                    {loading ? (
+                        <div className="w-4 h-4 border border-red-300 border-t-red-600 rounded-full animate-spin"></div>
+                    ) : (
+                        <ApperIcon name="Trash2" size={16} />
+                    )}
                 </Button>
             </div>
         </div></div></Card>

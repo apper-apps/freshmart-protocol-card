@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 
 export const useCart = () => {
-  const [cart, setCart] = useState([]);
+const [cart, setCart] = useState([]);
   const [toastQueue, setToastQueue] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [loading, setLoading] = useState(false);
 
 // Load cart from localStorage on mount
   useEffect(() => {
@@ -57,89 +58,140 @@ export const useCart = () => {
   const queueToast = useCallback((type, message) => {
     setToastQueue(prev => [...prev, { type, message }]);
   }, []);
-const addToCart = useCallback((product, quantity = 1) => {
-    const itemId = product.variantId || product.Id;
-    const variantText = product.selectedVariant 
-      ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
-      : '';
+const addToCart = useCallback(async (product, quantity = 1) => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      const itemId = product.variantId || product.Id;
+      const variantText = product.selectedVariant 
+        ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
+        : '';
 
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => 
-        (item.variantId || item.Id) === itemId
-      );
-      
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + quantity;
-        if (newQuantity > product.stock) {
-          queueToast('warning', `Only ${product.stock} items available in stock`);
-          return prevCart;
-        }
-        
-        queueToast('success', `Updated ${product.title}${variantText} quantity in cart`);
-        
-        return prevCart.map(item =>
+      setCart(prevCart => {
+        const existingItem = prevCart.find(item => 
           (item.variantId || item.Id) === itemId
-            ? { 
-                ...item, 
-                quantity: newQuantity,
-                price: product.price // Update price in case variant changed
-              }
-            : item
         );
-      } else {
-        if (quantity > product.stock) {
-          queueToast('warning', `Only ${product.stock} items available in stock`);
-          return prevCart;
+        
+        if (existingItem) {
+          const newQuantity = existingItem.quantity + quantity;
+          if (newQuantity > (product.stock || 99)) {
+            queueToast('warning', `Only ${product.stock || 99} items available in stock`);
+            return prevCart;
+          }
+          
+          queueToast('success', `Updated ${product.title}${variantText} quantity in cart`);
+          
+          const updatedCart = prevCart.map(item =>
+            (item.variantId || item.Id) === itemId
+              ? { 
+                  ...item, 
+                  quantity: newQuantity,
+                  price: product.price
+                }
+              : item
+          );
+          
+          // Save to localStorage
+          localStorage.setItem('cart', JSON.stringify(updatedCart));
+          return updatedCart;
+        } else {
+          if (quantity > (product.stock || 99)) {
+            queueToast('warning', `Only ${product.stock || 99} items available in stock`);
+            return prevCart;
+          }
+          
+          queueToast('success', `${product.title}${variantText} added to cart`);
+          
+          const newCart = [...prevCart, { 
+            ...product, 
+            quantity,
+            variantId: itemId,
+            displayName: `${product.title}${variantText}`,
+            price: product.price
+          }];
+          
+          // Save to localStorage
+          localStorage.setItem('cart', JSON.stringify(newCart));
+          return newCart;
+        }
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [queueToast, loading]);
+
+const removeFromCart = useCallback(async (productId) => {
+    if (loading) return;
+    
+    setLoading(true);
+    try {
+      setCart(prevCart => {
+        const item = prevCart.find(item => (item.variantId || item.Id) === productId);
+        if (item) {
+          queueToast('success', `${item.displayName || item.title} removed from cart`);
         }
         
-        queueToast('success', `${product.title}${variantText} added to cart`);
+        const updatedCart = prevCart.filter(item => (item.variantId || item.Id) !== productId);
         
-        return [...prevCart, { 
-          ...product, 
-          quantity,
-          variantId: itemId,
-          displayName: `${product.title}${variantText}`,
-          // Ensure price is correctly set for variant
-          price: product.price
-        }];
-      }
-    });
-  }, [queueToast]);
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [queueToast, loading]);
 
-const removeFromCart = useCallback((productId) => {
-    setCart(prevCart => {
-      const item = prevCart.find(item => item.Id === productId);
-      if (item) {
-        queueToast('success', `${item.title} removed from cart`);
-      }
-      return prevCart.filter(item => item.Id !== productId);
-    });
-  }, [queueToast]);
-
-const updateQuantity = useCallback((productId, newQuantity) => {
+const updateQuantity = useCallback(async (productId, newQuantity) => {
+    if (loading) return;
+    
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
 
-    setCart(prevCart => {
-      return prevCart.map(item => {
-        const itemId = item.variantId || item.Id;
-        if (itemId === productId) {
-          if (newQuantity > item.stock) {
-            queueToast('warning', `Only ${item.stock} items available in stock`);
-            return item;
+    setLoading(true);
+    try {
+      setCart(prevCart => {
+        const updatedCart = prevCart.map(item => {
+          const itemId = item.variantId || item.Id;
+          if (itemId === productId) {
+            const maxStock = item.stock || 99;
+            if (newQuantity > maxStock) {
+              queueToast('warning', `Only ${maxStock} items available in stock`);
+              return item;
+            }
+            return { ...item, quantity: newQuantity };
           }
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
+          return item;
+        });
+        
+        // Save to localStorage
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        return updatedCart;
       });
-    });
-  }, [removeFromCart, queueToast]);
-const clearCart = useCallback(() => {
-    setCart([]);
-    queueToast('success', "Cart cleared");
-  }, [queueToast]);
+    } finally {
+      setLoading(false);
+    }
+  }, [removeFromCart, queueToast, loading]);
+const clearCart = useCallback(async (skipConfirmation = false) => {
+    if (loading) return;
+    
+    if (!skipConfirmation && cart.length > 0) {
+      const confirmed = window.confirm('Are you sure you want to clear your cart? This action cannot be undone.');
+      if (!confirmed) return;
+    }
+
+    setLoading(true);
+    try {
+      setCart([]);
+      localStorage.removeItem('cart');
+      queueToast('success', "Cart cleared");
+    } finally {
+      setLoading(false);
+    }
+  }, [queueToast, loading, cart.length]);
 
   const getTotalItems = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
@@ -171,6 +223,7 @@ return {
     getSubtotal,
     isInCart,
     getCartItem,
-    isInitialized
+    isInitialized,
+    loading
   };
 };

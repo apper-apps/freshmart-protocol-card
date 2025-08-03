@@ -9,7 +9,7 @@ import { useCart } from "@/hooks/useCart";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, getSubtotal, getTotalItems, clearCart } = useCart();
+const { cart, getSubtotal, getTotalItems, clearCart, loading } = useCart();
 
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
@@ -48,19 +48,29 @@ const Cart = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={clearCart}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+onClick={() => clearCart(false)}
+          disabled={loading || cart.length === 0}
+          className={`text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 ${loading || cart.length === 0 ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <ApperIcon name="Trash2" size={16} className="mr-2" />
-          Clear Cart
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border border-red-300 border-t-red-600 rounded-full animate-spin mr-2"></div>
+              Clearing...
+            </>
+          ) : (
+            <>
+              <ApperIcon name="Trash2" size={16} className="mr-2" />
+              Clear Cart ({getTotalItems()})
+            </>
+          )}
         </Button>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {cart.map((item) => (
-            <CartItem key={item.Id} item={item} />
+{cart.map((item) => (
+            <CartItem key={item.variantId || item.Id} item={item} />
           ))}
         </div>
 
