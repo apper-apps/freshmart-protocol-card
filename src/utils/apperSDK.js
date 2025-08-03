@@ -160,19 +160,21 @@ try {
                                 cleanTransactionId.startsWith('JAZ-') ||
                                 cleanTransactionId.startsWith('EAS-') ||
                                 cleanTransactionId.startsWith('BAN-') ||
+                                cleanTransactionId.startsWith('COD-') ||
                                 cleanTransactionId.startsWith('FAIL-');
-// Enhanced validation for system-generated transaction IDs
+
+      // Enhanced validation for all transaction IDs
+      if (!cleanTransactionId || cleanTransactionId.length < 4) {
+        throw new Error('Transaction ID is too short - minimum 4 characters required');
+      }
+      
+      // Ensure all IDs follow proper format (more lenient for compatibility)
+      if (!/^[a-zA-Z0-9\-_.]+$/.test(cleanTransactionId)) {
+        throw new Error('Transaction ID format is invalid - only alphanumeric characters, hyphens, underscores, and dots are allowed');
+      }
+      
+      // System-generated IDs are automatically accepted if they pass basic validation
       if (isSystemGenerated) {
-        // Validate format even for system-generated IDs
-        if (!cleanTransactionId || cleanTransactionId.length < 8) {
-          throw new Error('Transaction ID is required for online payments - invalid system-generated ID');
-        }
-        
-        // Ensure system-generated IDs follow proper format
-        if (!/^[a-zA-Z0-9\-_.]+$/.test(cleanTransactionId)) {
-          throw new Error('Transaction ID format is invalid - contains unsupported characters');
-        }
-        
         console.log('Processing validated system-generated transaction ID:', cleanTransactionId);
         return {
           success: true,
@@ -181,7 +183,7 @@ try {
           amount: null,
           timestamp: new Date().toISOString()
         };
-}
+      }
       
       // Accept gateway transaction IDs (common patterns)
       const isGatewayGenerated = /^[A-Z0-9_-]{6,50}$/i.test(cleanTransactionId) ||

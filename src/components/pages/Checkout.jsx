@@ -118,11 +118,13 @@ const Checkout = () => {
 const tax = Math.round(subtotal * 0.05);
   const total = subtotal + deliveryFee + tax;
 
-  // Transaction ID validation helper
+// Transaction ID validation helper
   const isValidTransactionId = (txId) => {
     if (!txId || typeof txId !== 'string') return false;
     const trimmed = txId.trim();
-    return trimmed.length >= 6 && /^[A-Za-z0-9\-_]+$/.test(trimmed);
+    if (trimmed.length < 8) return false;
+    // Allow alphanumeric characters, hyphens, underscores, and dots
+    return /^[a-zA-Z0-9\-_.]+$/.test(trimmed);
   };
 
   const handleAddressSubmit = (e) => {
@@ -133,15 +135,15 @@ const tax = Math.round(subtotal * 0.05);
     }
     setStep(2);
   };
-
-const handlePaymentSubmit = async (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     
     if (!payment.method) {
       toast.error("Please select a payment method");
       return;
     }
-try {
+
+    try {
       setLoading(true);
       toast.info("Initializing payment gateway...");
 
@@ -188,45 +190,35 @@ try {
         // Enhanced fallback for manual entry if SDK not available
         const trimmedTransactionId = payment.transactionId?.trim() || '';
         
-        // Validate transaction ID for online payments
-        if (isOnlinePayment && !isValidTransactionId(trimmedTransactionId)) {
-          toast.error("Please enter a valid transaction ID for online payments");
-          setLoading(false);
-          return;
-        }
-        
-        // Enhanced transaction ID validation for online payments
-        const isValidTransactionId = (txId) => {
-          if (!txId || txId.length < 8) return false;
-          // Allow alphanumeric characters, hyphens, underscores, and dots
-          return /^[a-zA-Z0-9\-_.]+$/.test(txId);
-        };
-        
-        if (!isValidTransactionId(trimmedTransactionId)) {
-          // For online payments, generate a standardized fallback transaction ID
-// Generate fallback transaction ID for online payments if empty
-        if (isOnlinePayment && !trimmedTransactionId) {
-          const timestamp = Date.now();
-          const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
-          const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
-          const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
-          
-          setPayment(prev => ({
-            ...prev,
+        // For online payments, require transaction ID or generate fallback
+        if (isOnlinePayment) {
+          if (!trimmedTransactionId) {
+            // Generate fallback transaction ID for online payments
+            const timestamp = Date.now();
+            const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
+            const methodPrefix = selectedPaymentMethod.gateway?.toUpperCase().substr(0, 3) || 'MANUAL';
+            const fallbackTransactionId = `${methodPrefix}-${timestamp}-${randomSuffix}`;
+            
+            setPayment(prev => ({
+              ...prev,
               transactionId: fallbackTransactionId
             }));
             toast.warning("Generated transaction ID for your payment. Please complete your payment and keep this ID for reference.");
             setStep(3);
-          } else {
+          } else if (!isValidTransactionId(trimmedTransactionId)) {
             toast.error("Please enter a valid transaction ID (minimum 8 characters, alphanumeric) to continue");
+            setLoading(false);
             return;
+          } else {
+            // Valid transaction ID provided
+            setPayment(prev => ({
+              ...prev,
+              transactionId: trimmedTransactionId
+            }));
+            setStep(3);
           }
         } else {
-          // Valid transaction ID provided
-          setPayment(prev => ({
-            ...prev,
-            transactionId: trimmedTransactionId
-          }));
+          // For non-online payments, proceed without transaction ID validation
           setStep(3);
         }
       }
@@ -297,16 +289,8 @@ const processPayment = async () => {
               finalTransactionId = null;
             }
           }
-// Final validation before proceeding
-        const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
-        const isOnlinePayment = selectedPaymentMethod?.type === 'mobile_wallet' || selectedPaymentMethod?.type === 'bank';
-        
-        if (isOnlinePayment && !isValidTransactionId(payment.transactionId)) {
-          toast.error("Valid Transaction ID is required for online payments");
-          setLoading(false);
-          return;
-        }
-          if (paymentResult.success && finalTransactionId) {
+
+          if (paymentResult.success && finalTransactionId && isValidTransactionId(finalTransactionId)) {
             setPayment(prev => ({
               ...prev,
               transactionId: finalTransactionId,
@@ -347,8 +331,10 @@ const processPayment = async () => {
 
       // Fallback handling when Apper SDK is not available or failed
       if (isOnlinePayment) {
-        // First, try to auto-generate transaction ID if none exists
-        if (!payment.transactionId || payment.transactionId.trim() === '') {
+        // Check if transaction ID exists and is valid
+        const currentTransactionId = payment.transactionId?.trim();
+        
+        if (!currentTransactionId) {
           // Auto-generate transaction ID for online payments as fallback
           const timestamp = Date.now();
           const randomSuffix = Math.random().toString(36).substr(2, 12);
@@ -373,40 +359,26 @@ const processPayment = async () => {
           };
         }
         
-        // Enhanced transaction ID format validation for manually entered IDs
-        const trimmedTransactionId = payment.transactionId.trim();
-        if (trimmedTransactionId.length < 4) {
-          throw new Error('Transaction ID is too short. Please enter the complete transaction ID from your payment confirmation.');
+        // Validate manually entered transaction ID
+        if (!isValidTransactionId(currentTransactionId)) {
+          throw new Error('Transaction ID format is invalid. Please enter a valid transaction ID from your payment confirmation.');
         }
-        
-        // Update payment with validated transaction ID
-        setPayment(prev => ({
-          ...prev,
-          transactionId: trimmedTransactionId
-        }));
         
         return { 
           success: true, 
           status: 'pending_verification', 
-          transactionId: trimmedTransactionId,
+          transactionId: currentTransactionId,
           method: payment.method 
         };
       } else {
         // For non-online payment methods, ensure transaction ID exists
-        let finalTransactionId = payment.transactionId;
-        if (!finalTransactionId || finalTransactionId.trim() === '') {
+        let finalTransactionId = payment.transactionId?.trim();
+        if (!finalTransactionId) {
           finalTransactionId = `${payment.method.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           setPayment(prev => ({
             ...prev,
             transactionId: finalTransactionId
           }));
-}
-        
-        // Ensure transaction ID exists for order processing
-        if (!payment.transactionId || !isValidTransactionId(payment.transactionId)) {
-          toast.error("Payment validation failed - invalid transaction ID");
-          setLoading(false);
-          return;
         }
         
         return { 
@@ -455,19 +427,10 @@ let paymentResult;
         }
         
 // Enhanced transaction ID validation with better error messages and format checking
-        const isValidTransactionId = (txId) => {
-          if (!txId || typeof txId !== 'string') return false;
-          const trimmed = txId.trim();
-          if (trimmed.length < 8) return false;
-          // Allow alphanumeric characters, hyphens, underscores, and dots
-          return /^[a-zA-Z0-9\-_.]+$/.test(trimmed);
-        };
-
-        if (!isValidTransactionId(paymentResult.transactionId)) {
+if (!isValidTransactionId(paymentResult.transactionId)) {
           // Generate standardized emergency fallback transaction ID
           const timestamp = Date.now();
           const randomSuffix = Math.random().toString(36).substr(2, 12).toUpperCase();
-// Safely access payment method gateway with fallback for emergency cases
           const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);
           const gatewayPrefix = selectedPaymentMethod?.gateway 
             ? selectedPaymentMethod.gateway.toUpperCase().substring(0, 3) 
@@ -505,8 +468,15 @@ let paymentResult;
       let finalPaymentStatus = payment.status || 'pending';
       
       // Ensure we have a valid transaction ID before verification
-      if (!payment.transactionId || !isValidTransactionId(payment.transactionId)) {
-        toast.error("Cannot verify payment - invalid transaction ID");
+// Enhanced validation with better error messages
+      if (!payment.transactionId) {
+        toast.error("Transaction ID is missing. Please ensure your payment was completed successfully.");
+        setLoading(false);
+        return;
+      }
+      
+      if (!isValidTransactionId(payment.transactionId)) {
+        toast.error("Transaction ID format is invalid. Please check and try again.");
         setLoading(false);
         return;
       }
