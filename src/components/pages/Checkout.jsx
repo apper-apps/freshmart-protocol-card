@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Card from "@/components/atoms/Card";
-import ApperIcon from "@/components/ApperIcon";
 import { useCart } from "@/hooks/useCart";
 import { orderService } from "@/services/api/orderService";
+import ApperIcon from "@/components/ApperIcon";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ const Checkout = () => {
   
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirmation
+  const [redirecting, setRedirecting] = useState(false);
   
   // Address form
   const [address, setAddress] = useState({
@@ -31,6 +32,19 @@ const Checkout = () => {
     transactionId: "",
     screenshot: null
   });
+
+  // Handle cart validation and navigation after render
+  useEffect(() => {
+    if (!cart || cart.length === 0) {
+      setRedirecting(true);
+      // Use setTimeout to ensure navigation happens after render
+      const timer = setTimeout(() => {
+        navigate("/cart", { replace: true });
+      }, 0);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [cart, navigate]);
 
   const subtotal = getSubtotal();
   const deliveryFee = subtotal >= 1500 ? 0 : 150;
@@ -95,9 +109,16 @@ const Checkout = () => {
     toast.success("Account number copied!");
   };
 
-  if (cart.length === 0) {
-    navigate("/cart");
-    return null;
+// Show loading state while redirecting for empty cart
+  if (redirecting || !cart || cart.length === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to cart...</p>
+        </div>
+      </div>
+    );
   }
 
   const selectedPaymentMethod = paymentMethods.find(m => m.id === payment.method);

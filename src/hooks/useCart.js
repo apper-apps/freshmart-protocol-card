@@ -4,23 +4,42 @@ import { toast } from "react-toastify";
 export const useCart = () => {
   const [cart, setCart] = useState([]);
   const [toastQueue, setToastQueue] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load cart from localStorage on mount
+// Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("freshmart-cart");
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (error) {
-        console.error("Error loading cart from localStorage:", error);
+    try {
+      const savedCart = localStorage.getItem("freshmart-cart");
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        // Ensure cart is always an array
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart);
+        } else {
+          console.warn("Invalid cart data in localStorage, resetting to empty array");
+          setCart([]);
+          localStorage.removeItem("freshmart-cart");
+        }
       }
+    } catch (error) {
+      console.error("Error loading cart from localStorage:", error);
+      setCart([]);
+      localStorage.removeItem("freshmart-cart");
+    } finally {
+      setIsInitialized(true);
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+// Save cart to localStorage whenever it changes (but only after initialization)
   useEffect(() => {
-    localStorage.setItem("freshmart-cart", JSON.stringify(cart));
-  }, [cart]);
+    if (isInitialized) {
+      try {
+        localStorage.setItem("freshmart-cart", JSON.stringify(cart));
+      } catch (error) {
+        console.error("Error saving cart to localStorage:", error);
+      }
+    }
+  }, [cart, isInitialized]);
 
   // Handle toast notifications after state updates
   useEffect(() => {
@@ -132,7 +151,7 @@ const isInCart = useCallback((productId) => {
     return cart.find(item => (item.variantId || item.Id) === productId);
   }, [cart]);
 
-  return {
+return {
     cart,
     addToCart,
     removeFromCart,
@@ -141,6 +160,7 @@ const isInCart = useCallback((productId) => {
     getTotalItems,
     getSubtotal,
     isInCart,
-    getCartItem
+    getCartItem,
+    isInitialized
   };
 };
