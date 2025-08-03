@@ -364,11 +364,13 @@ if (!paymentResult.transactionId || paymentResult.transactionId.trim() === '') {
           // Generate standardized emergency fallback transaction ID
           const timestamp = Date.now();
           const randomSuffix = Math.random().toString(36).substr(2, 12);
-          const gatewayPrefix = paymentConfig.gateway?.toUpperCase().substr(0, 3) || 'EMERGENCY';
+          // Safely access paymentConfig with fallback for emergency cases
+          const gatewayPrefix = (typeof paymentConfig !== 'undefined' && paymentConfig?.gateway) 
+            ? paymentConfig.gateway.toUpperCase().substr(0, 3) 
+            : 'EMERGENCY';
           const emergencyTransactionId = `${gatewayPrefix}-${timestamp}-${randomSuffix}`;
           
           console.warn('Payment processing completed but no transaction ID was generated, using emergency fallback:', emergencyTransactionId);
-          
           setPayment(prev => ({
             ...prev,
             transactionId: emergencyTransactionId
