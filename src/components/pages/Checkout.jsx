@@ -297,20 +297,13 @@ const processPayment = async () => {
           }));
         }
         
-        return { 
+return { 
           success: true, 
           status: payment.method === 'cod' ? 'pending' : 'pending_verification', 
           transactionId: finalTransactionId,
           method: payment.method 
         };
       }
-
-      return { 
-        success: true, 
-        status: 'pending_verification', 
-        transactionId: payment.transactionId,
-        method: payment.method 
-      };
 
     } catch (error) {
       console.error('Payment processing error:', error);
