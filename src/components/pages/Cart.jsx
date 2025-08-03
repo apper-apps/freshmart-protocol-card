@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import CartItem from "@/components/molecules/CartItem";
 import Empty from "@/components/ui/Empty";
-import Checkout from "@/components/pages/Checkout";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 
@@ -17,55 +16,14 @@ const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasS
   const tax = Math.round(subtotal * 0.05); // 5% tax
 const total = subtotal + deliveryFee + tax;
 
-  const handleCheckout = () => {
-    // Prevent redirect loops with session tracking
-    const redirectCount = parseInt(sessionStorage.getItem('checkoutRedirectCount') || '0');
-    const lastRedirectTime = parseInt(sessionStorage.getItem('lastCheckoutRedirect') || '0');
-    const now = Date.now();
-
-    // Reset counter if more than 30 seconds have passed
-    if (now - lastRedirectTime > 30000) {
-      sessionStorage.setItem('checkoutRedirectCount', '0');
-    }
-
-    // Prevent infinite loops - max 3 redirects in 30 seconds
-    if (redirectCount >= 3) {
-      toast.error('Unable to proceed to checkout. Please try again later.');
-      sessionStorage.removeItem('checkoutRedirectCount');
-      sessionStorage.removeItem('lastCheckoutRedirect');
-      return;
-    }
-
+const handleCheckout = () => {
     // Validate cart before proceeding
     if (!validateCart()) {
       return;
     }
 
-    // Track redirect attempt
-    sessionStorage.setItem('checkoutRedirectCount', (redirectCount + 1).toString());
-    sessionStorage.setItem('lastCheckoutRedirect', now.toString());
-
-    // Set timeout protection (5 seconds max)
-    const redirectTimeout = setTimeout(() => {
-      toast.error('Checkout is taking too long. Redirecting back to cart.');
-      sessionStorage.removeItem('checkoutRedirectCount');
-      sessionStorage.removeItem('lastCheckoutRedirect');
-      // Already on cart page, just show error
-    }, 5000);
-
-    try {
-      // Clear timeout if navigation succeeds quickly
-      clearTimeout(redirectTimeout);
-      navigate("/checkout");
-    } catch (error) {
-      clearTimeout(redirectTimeout);
-      console.error('Checkout navigation failed:', error);
-      toast.error('Failed to navigate to checkout. Please try again.');
-      
-      // Reset redirect tracking on error
-      sessionStorage.removeItem('checkoutRedirectCount');
-      sessionStorage.removeItem('lastCheckoutRedirect');
-    }
+    // Navigate to checkout page
+    navigate("/checkout");
   };
 
   const handleContinueShopping = () => {
