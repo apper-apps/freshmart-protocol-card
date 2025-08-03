@@ -61,8 +61,8 @@ const Header = () => {
               onClick={() => navigate("/cart")}
             >
               <ApperIcon name="ShoppingCart" size={22} />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-accent-500 to-accent-400 text-gray-900 text-xs rounded-full min-w-[24px] min-h-[24px] flex items-center justify-center font-bold animate-bounce-subtle">
+{totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-400 text-white text-xs rounded-full min-w-[20px] min-h-[20px] flex items-center justify-center font-bold shadow-lg border-2 border-white animate-bounce-subtle">
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}

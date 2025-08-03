@@ -68,7 +68,7 @@ const Checkout = () => {
   // Initialize checkout process
   const initializeCheckout = async (cartItems) => {
     try {
-      // Validate cart items against current stock
+// Validate cart items against current stock
       const isValid = await validateCart();
       if (!isValid && !redirecting) {
         setRedirecting(true);

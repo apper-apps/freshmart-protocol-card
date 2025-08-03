@@ -20,19 +20,25 @@ const { cart, getSubtotal, getTotalItems, clearCart, loading, validateCart, hasS
   // Enhanced cart validation
   const [validationErrors, setValidationErrors] = useState([]);
   
-  useEffect(() => {
-    const errors = validateCart();
-    setValidationErrors(errors);
+useEffect(() => {
+    // Initialize validation state when component mounts
+    setValidationErrors([]);
   }, [cart, validateCart]);
 
-const handleCheckout = () => {
-    // Validate cart before proceeding
-    if (!validateCart()) {
-      return;
-    }
+const handleCheckout = async () => {
+    try {
+      // Validate cart before proceeding
+      const isValid = await validateCart();
+      if (!isValid) {
+        return;
+      }
 
-    // Navigate to checkout page
-    navigate("/checkout");
+      // Navigate to checkout page
+      navigate("/checkout");
+    } catch (error) {
+      console.error('Checkout validation error:', error);
+      toast.error("Failed to validate cart. Please try again.");
+    }
   };
 
   const handleContinueShopping = () => {

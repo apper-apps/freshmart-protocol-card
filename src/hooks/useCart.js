@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-toastify";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 
 export const useCart = () => {
 const [cart, setCart] = useState([]);
@@ -130,7 +130,7 @@ if (loading || isProcessingQueue) {
       // Validate stock before proceeding
       const maxStock = product.stock || 99;
       if (quantity > maxStock) {
-        queueToast('warning', `Only ${maxStock} items available in stock`);
+        toast.error(`Only ${maxStock} items available in stock`);
         setLoading(false);
         resolve();
         return;
@@ -147,14 +147,14 @@ if (loading || isProcessingQueue) {
         if (existingItem) {
           const newQuantity = existingItem.quantity + quantity;
           if (newQuantity > maxStock) {
-            queueToast('warning', `Only ${maxStock} items available in stock`);
+            toast.error(`Only ${maxStock} items available in stock`);
             setLoading(false);
             resolve();
             return prevCart;
           }
           
           operation = 'update';
-          queueToast('success', `Updated ${product.title}${variantText} in cart`);
+          toast.success(`Updated ${product.title}${variantText} in cart`);
           
           updatedCart = prevCart.map(item =>
             (item.variantId || item.Id) === itemId
@@ -167,7 +167,7 @@ if (loading || isProcessingQueue) {
               : item
           );
         } else {
-          queueToast('success', `${product.title}${variantText} added to cart`);
+          toast.success(`${product.title}${variantText} added to cart`);
           
           updatedCart = [...prevCart, { 
             ...product, 
@@ -188,7 +188,7 @@ if (loading || isProcessingQueue) {
             resolve();
           } catch (error) {
             console.error('Error saving cart:', error);
-            queueToast('error', 'Failed to save cart. Please try again.');
+            toast.error('Failed to save cart. Please try again.');
             setLoading(false);
             reject(error);
           }
@@ -204,7 +204,7 @@ if (loading || isProcessingQueue) {
         return updatedCart;
       });
     });
-  }, [queueToast, loading, isProcessingQueue]);
+  }, [loading, isProcessingQueue]);
 
 const removeFromCart = useCallback(async (productId) => {
     if (loading || isProcessingQueue) {
@@ -218,7 +218,7 @@ const removeFromCart = useCallback(async (productId) => {
         const itemToRemove = prevCart.find(item => (item.variantId || item.Id) === productId);
         
         if (!itemToRemove) {
-          queueToast('warning', 'Item not found in cart');
+          toast.error('Item not found in cart');
           setLoading(false);
           resolve();
           return prevCart;
@@ -227,7 +227,7 @@ const removeFromCart = useCallback(async (productId) => {
         // Optimistic removal with animation delay
         const updatedCart = prevCart.filter(item => (item.variantId || item.Id) !== productId);
         
-        queueToast('success', `${itemToRemove.displayName || itemToRemove.title} removed from cart`);
+        toast.success(`${itemToRemove.displayName || itemToRemove.title} removed from cart`);
         
         // Enhanced localStorage operation with error recovery
         const saveOperation = () => {
@@ -247,7 +247,7 @@ const removeFromCart = useCallback(async (productId) => {
             resolve();
           } catch (error) {
             console.error('Error removing from cart:', error);
-            queueToast('error', 'Failed to remove item. Please try again.');
+            toast.error('Failed to remove item. Please try again.');
             
             // Revert cart state on storage error
             setCart(prevCart);
@@ -262,7 +262,7 @@ const removeFromCart = useCallback(async (productId) => {
         return updatedCart;
       });
     });
-  }, [queueToast, loading, isProcessingQueue]);
+  }, [loading, isProcessingQueue]);
 
 const updateQuantity = useCallback(async (productId, newQuantity) => {
     if (loading || isProcessingQueue) {
@@ -285,7 +285,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         const targetItem = prevCart.find(item => (item.variantId || item.Id) === productId);
         
         if (!targetItem) {
-          queueToast('warning', 'Item not found in cart');
+          toast.error('Item not found in cart');
           setLoading(false);
           resolve();
           return prevCart;
@@ -295,7 +295,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         
         // Stock validation with user feedback
         if (newQuantity > maxStock) {
-          queueToast('warning', `Only ${maxStock} ${targetItem.displayName || targetItem.title} available in stock`);
+          toast.error(`Only ${maxStock} ${targetItem.displayName || targetItem.title} available in stock`);
           setLoading(false);
           resolve();
           return prevCart;
@@ -305,7 +305,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         const quantityDiff = newQuantity - targetItem.quantity;
         const action = quantityDiff > 0 ? 'increased' : 'decreased';
         
-        queueToast('success', `Quantity ${action} to ${newQuantity}`);
+        toast.success(`Quantity ${action} to ${newQuantity}`);
 
         const updatedCart = prevCart.map(item => {
           const itemId = item.variantId || item.Id;
@@ -343,7 +343,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
             resolve();
           } catch (error) {
             console.error('Error updating quantity:', error);
-            queueToast('error', 'Failed to update quantity. Please try again.');
+            toast.error('Failed to update quantity. Please try again.');
             
             // Revert to previous state on error
             setCart(prevCart);
@@ -362,7 +362,7 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
         return updatedCart;
       });
     });
-  }, [removeFromCart, queueToast, loading, isProcessingQueue]);
+  }, [removeFromCart, loading, isProcessingQueue]);
 const clearCart = useCallback(async (skipConfirmation = false) => {
     if (loading || isProcessingQueue) {
       return Promise.resolve();
@@ -399,13 +399,13 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
           localStorage.removeItem('freshmart-cart-stats');
           
           const itemCount = cartBackup.reduce((sum, item) => sum + item.quantity, 0);
-          queueToast('success', `Cart cleared (${itemCount} items removed)`);
+          toast.success(`Cart cleared (${itemCount} items removed)`);
           
           setLoading(false);
           resolve();
         } catch (error) {
           console.error('Error clearing cart:', error);
-          queueToast('error', 'Failed to clear cart. Please try again.');
+          toast.error('Failed to clear cart. Please try again.');
           
           // Restore cart on error
           setCart(cartBackup);
@@ -421,29 +421,29 @@ const clearCart = useCallback(async (skipConfirmation = false) => {
         setTimeout(clearOperation, 100);
       }
     });
-  }, [queueToast, loading, isProcessingQueue, cart]);
-
-  const getTotalItems = () => {
+  }, [loading, isProcessingQueue, cart]);
+// Get total number of items in cart
+  const getTotalItems = useCallback(() => {
     return cart.reduce((total, item) => total + item.quantity, 0);
-  };
+  }, [cart]);
 
-const getSubtotal = () => {
+  const getSubtotal = useCallback(() => {
     return cart.reduce((total, item) => {
       // Use the stored price which includes variant modifications
       const itemPrice = item.price || 0;
       return total + (itemPrice * item.quantity);
     }, 0);
-  };
+  }, [cart]);
 
-const isInCart = useCallback((productId) => {
+  const isInCart = useCallback((productId) => {
     return cart.some(item => (item.variantId || item.Id) === productId);
   }, [cart]);
 
   const getCartItem = useCallback((productId) => {
-return cart.find(item => (item.variantId || item.Id) === productId);
+    return cart.find(item => (item.variantId || item.Id) === productId);
   }, [cart]);
 
-const validateCart = useCallback(async () => {
+  const validateCart = useCallback(async () => {
     if (cart.length === 0) {
       toast.error("Your cart is empty. Add some items to proceed.");
       return false;
@@ -488,7 +488,7 @@ const validateCart = useCallback(async () => {
     }
   }, [cart]);
 
-const hasStock = useCallback(async (productId, requestedQuantity = 1) => {
+  const hasStock = useCallback(async (productId, requestedQuantity = 1) => {
     try {
       // Import products data for real stock checking
       const products = (await import('@/services/mockData/products.json')).default;
@@ -504,8 +504,9 @@ const hasStock = useCallback(async (productId, requestedQuantity = 1) => {
     }
   }, []);
 
-return {
+  return {
     cart,
+    loading,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -517,7 +518,6 @@ return {
     validateCart,
     hasStock,
     isInitialized,
-    loading,
     isProcessingQueue,
     operationQueue: operationQueue.length,
     queueOperation
