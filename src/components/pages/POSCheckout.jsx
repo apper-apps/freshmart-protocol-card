@@ -196,66 +196,7 @@ const loadProducts = async () => {
     return null;
   };
 
-const handleBarcodeDetected = useCallback(async (detectedBarcode) => {
-    if (isScanning || loading) return;
-    
-    try {
-      setIsScanning(true);
-      const product = await productService.getByBarcode(detectedBarcode);
-      
-      // Use proper async cart operation
-      if (product) {
-        await addToCart(product);
-        stopScanner();
-        setBarcode('');
-        toast.success(`${product.title} added to cart`);
-      }
-    } catch (err) {
-      toast.error('Product not found for barcode: ' + detectedBarcode);
-    } finally {
-      setIsScanning(false);
-    }
-  }, [isScanning, loading, addToCart]);
-
-// Manual barcode input
-  const handleBarcodeSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    
-    if (!barcode.trim() || isScanning || loading) return;
-    
-    try {
-      setIsScanning(true);
-      const product = await productService.getByBarcode(barcode);
-      
-      if (product) {
-        await addToCart(product);
-        setBarcode('');
-        toast.success(`${product.title} added to cart`);
-      }
-    } catch (err) {
-      toast.error('Product not found for barcode: ' + barcode);
-    } finally {
-      setIsScanning(false);
-    }
-  }, [barcode, isScanning, loading, addToCart]);
-
-  // Product search
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
-      loadProducts();
-      return;
-    }
-    
-    try {
-      const results = await productService.searchProducts(query);
-      setProducts(results);
-    } catch (err) {
-      toast.error('Search failed');
-    }
-  };
-
-  // Cart management
+// Cart management functions (declared before usage in callbacks)
   const addToCart = (product, quantity = 1) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.Id === product.Id);
@@ -319,6 +260,67 @@ const handleBarcodeDetected = useCallback(async (detectedBarcode) => {
     setCart([]);
     toast.success('Cart cleared');
   };
+
+  // Barcode detection callbacks (now can safely reference cart functions)
+  const handleBarcodeDetected = useCallback(async (detectedBarcode) => {
+    if (isScanning || loading) return;
+    
+    try {
+      setIsScanning(true);
+      const product = await productService.getByBarcode(detectedBarcode);
+      
+      if (product) {
+        addToCart(product);
+        stopScanner();
+        setBarcode('');
+        toast.success(`${product.title} added to cart`);
+      }
+    } catch (err) {
+      toast.error('Product not found for barcode: ' + detectedBarcode);
+    } finally {
+      setIsScanning(false);
+    }
+  }, [isScanning, loading, addToCart]);
+
+  // Handle manual barcode submission
+  const handleBarcodeSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    
+    if (!barcode.trim() || isScanning || loading) return;
+    
+    try {
+      setIsScanning(true);
+      const product = await productService.getByBarcode(barcode);
+      
+      if (product) {
+        addToCart(product);
+        setBarcode('');
+        toast.success(`${product.title} added to cart`);
+      }
+    } catch (err) {
+      toast.error('Product not found for barcode: ' + barcode);
+    } finally {
+      setIsScanning(false);
+    }
+  }, [barcode, isScanning, loading, addToCart]);
+
+  // Product search
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      loadProducts();
+      return;
+    }
+    
+    try {
+      const results = await productService.searchProducts(query);
+      setProducts(results);
+    } catch (err) {
+      toast.error('Search failed');
+    }
+  };
+
+  // Cart management
 
   // Calculations
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
