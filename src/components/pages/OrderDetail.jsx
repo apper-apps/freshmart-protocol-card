@@ -7,7 +7,7 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import OrderStatusTimeline from "@/components/molecules/OrderStatusTimeline";
 import ApperIcon from "@/components/ApperIcon";
-import { orderService } from "@/services/api/orderService";
+import orderService from "@/services/api/orderService";
 import { format } from "date-fns";
 
 const OrderDetail = () => {
