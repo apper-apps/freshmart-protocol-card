@@ -18,16 +18,23 @@ export const orderService = {
     return { ...order };
   },
 
-  async create(orderData) {
+async create(orderData) {
     await delay(500);
-    const newId = Math.max(...orderData.map(o => o.Id)) + 1;
+    
+    // Import existing orders to calculate new ID
+    const existingOrders = (await import('@/services/mockData/orders.json')).default;
+    const newId = existingOrders && existingOrders.length > 0 
+      ? Math.max(...existingOrders.map(o => o.Id)) + 1 
+      : 1;
+    
     const newOrder = {
       Id: newId,
-      status: "pending",
+      status: orderData.status || "pending",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...orderData
     };
+    
     return { ...newOrder };
   },
 
