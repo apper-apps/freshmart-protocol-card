@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { format } from "date-fns";
+import { vendorService } from "@/services/api/vendorService";
+import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { vendorService } from "@/services/api/vendorService";
-import { format } from "date-fns";
-import { toast } from "react-toastify";
+import Orders from "@/components/pages/Orders";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const VendorDashboard = () => {
 const [orders, setOrders] = useState([]);
