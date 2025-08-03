@@ -247,41 +247,66 @@ const isInCart = useCallback((productId) => {
 return cart.find(item => (item.variantId || item.Id) === productId);
   }, [cart]);
 
-const validateCart = useCallback(() => {
+const validateCart = useCallback(async () => {
     if (cart.length === 0) {
       toast.error("Your cart is empty. Add some items to proceed.");
       return false;
     }
     
-    // Check if all items have sufficient stock
-    const invalidItems = cart.filter(item => !hasStock(item.variantId || item.Id, item.quantity));
-    
-    if (invalidItems.length > 0) {
-      invalidItems.forEach(item => {
-        toast.error(`${item.title} is out of stock or insufficient quantity available.`);
-      });
+    try {
+      // Import products data for comprehensive stock validation
+      const products = (await import('@/services/mockData/products.json')).default;
+      
+      for (const item of cart) {
+        // Check if product exists in database
+        const product = products.find(p => p.Id === item.Id);
+        if (!product) {
+          toast.error(`Product "${item.title}" is no longer available.`);
+          return false;
+        }
+        
+        // Check if product is active
+        if (!product.isActive) {
+          toast.error(`Product "${item.title}" is currently unavailable.`);
+          return false;
+        }
+        
+        // Check stock availability
+        if (product.stock < item.quantity) {
+          toast.error(`Only ${product.stock} units of "${item.title}" are available.`);
+          return false;
+        }
+        
+        // Check for valid quantity
+        if (item.quantity <= 0) {
+          toast.error(`Invalid quantity for "${item.title}".`);
+          return false;
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Cart validation error:', error);
+      toast.error("Failed to validate cart. Please try again.");
       return false;
     }
-    
-    // Check for any items with zero or negative quantity
-    const zeroQuantityItems = cart.filter(item => item.quantity <= 0);
-    if (zeroQuantityItems.length > 0) {
-      toast.error("Please remove items with zero quantity from your cart.");
-      return false;
-    }
-    
-    return true;
   }, [cart]);
 
-  const hasStock = useCallback((productId, requestedQuantity = 1) => {
-    // This would typically check against actual inventory
-    // For now, assume items are in stock unless quantity > 10
-    const cartItem = cart.find(item => (item.variantId || item.Id) === productId);
-    if (!cartItem) return true;
-    
-    // Mock stock validation - in real app, this would check against backend inventory
-    return requestedQuantity <= 10 && requestedQuantity > 0;
-  }, [cart]);
+const hasStock = useCallback(async (productId, requestedQuantity = 1) => {
+    try {
+      // Import products data for real stock checking
+      const products = (await import('@/services/mockData/products.json')).default;
+      const product = products.find(p => p.Id === productId);
+      
+      if (!product) return false;
+      if (!product.isActive) return false;
+      
+      return product.stock >= requestedQuantity && requestedQuantity > 0;
+    } catch (error) {
+      console.error('Stock validation error:', error);
+      return false;
+    }
+  }, []);
 
 return {
     cart,

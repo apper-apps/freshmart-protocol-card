@@ -1,127 +1,151 @@
 import orderData from "@/services/mockData/orders.json";
 
 // Simulate network delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-export const orderService = {
-  async getAll() {
-    await delay(400);
-    return [...orderData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+// Cart validation function - equivalent to backend validation
+const validateCart = async (cartItems) => {
+  if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+    throw new Error('Cart is empty or invalid');
+  }
+
+  try {
+    // Import products data for stock validation
+    const products = (await import('@/services/mockData/products.json')).default;
+    
+    for (const item of cartItems) {
+      // Check if product exists
+      const product = products.find(p => p.Id === item.Id);
+      if (!product) {
+        throw new Error(`Product "${item.title || 'Unknown'}" is no longer available`);
+      }
+      
+      // Check if product is active
+      if (!product.isActive) {
+        throw new Error(`Product "${product.title}" is currently unavailable`);
+      }
+      
+      // Check stock availability
+      if (product.stock < item.quantity) {
+        throw new Error(`Only ${product.stock} units of "${product.title}" are available`);
+      }
+      
+      // Validate quantity is positive
+      if (item.quantity <= 0) {
+        throw new Error(`Invalid quantity for "${product.title}"`);
+      }
+      
+      // Check for price consistency (optional - prevents price manipulation)
+      if (item.price && Math.abs(item.price - product.price) > 0.01) {
+        throw new Error(`Price mismatch for "${product.title}". Please refresh your cart.`);
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    throw error;
+  }
+};
+
+let nextId = Math.max(...orderData.map(order => order.Id), 0) + 1;
+let orders = [...orderData];
+
+const orderService = {
+  // Validate cart before checkout - equivalent to backend route handler
+  validateCart: async (cartItems) => {
+    await delay(200);
+    return validateCart(cartItems);
   },
 
-  async getById(id) {
+  // Get all orders
+  getAll: async () => {
     await delay(300);
-    const order = orderData.find(o => o.Id === id);
+    return orders.map(order => ({ ...order }));
+  },
+
+  // Get order by ID
+  getById: async (id) => {
+    await delay(200);
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new Error('Invalid order ID');
+    }
+    const order = orders.find(o => o.Id === orderId);
     if (!order) {
-      throw new Error("Order not found");
+      throw new Error('Order not found');
     }
     return { ...order };
   },
 
-async create(orderData) {
-    // Simulate network delay with potential failure
-    await delay(Math.random() > 0.95 ? 6000 : 800); // 5% chance of timeout
+  // Create new order with cart validation
+  create: async (orderData) => {
+    await delay(500);
     
-    // Simulate network failure
-    if (Math.random() > 0.98) { // 2% chance of network failure
-      throw new Error("Network error occurred");
-    }
-    
-    // Validate order data
-    if (!orderData.items || orderData.items.length === 0) {
-      throw new Error("Order must contain at least one item");
-    }
-    
-    if (!orderData.deliveryAddress || !orderData.paymentMethod) {
-      throw new Error("Delivery address and payment method are required");
+    if (!orderData || typeof orderData !== 'object') {
+      throw new Error('Invalid order data');
     }
 
-    if (!orderData.transactionId && orderData.paymentMethod !== 'cash') {
-      throw new Error("Transaction ID is required for electronic payments");
-    }
-    
-    // Validate stock availability
+    // Validate cart before creating order
     try {
-      const products = (await import('@/services/mockData/products.json')).default;
-      
-      for (const item of orderData.items) {
-        const product = products.find(p => p.Id === item.Id);
-        if (!product) {
-          throw new Error(`Product "${item.title}" is no longer available`);
-        }
-        if (!product.isActive) {
-          throw new Error(`Product "${item.title}" is currently unavailable`);
-        }
-        if (product.stock < item.quantity) {
-          throw new Error(`Insufficient stock for "${item.title}". Only ${product.stock} units available`);
-        }
-      }
+      await validateCart(orderData.items);
     } catch (error) {
-      if (error.message.includes('stock') || error.message.includes('available')) {
-        throw error;
-      }
-      throw new Error("Failed to validate product availability");
+      throw new Error(`Cart validation failed: ${error.message}`);
     }
-    
-    // Import existing orders to calculate new ID
-    const existingOrders = (await import('@/services/mockData/orders.json')).default;
-    const newId = existingOrders && existingOrders.length > 0 
-      ? Math.max(...existingOrders.map(o => o.Id)) + 1 
-      : 1;
-    
+
     const newOrder = {
-      Id: newId,
-      customerId: orderData.customerId || `cust_${Date.now()}`,
-      status: orderData.status || "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      items: orderData.items.map(item => ({
-        ...item,
-        vendorId: item.vendorId || 1
-      })),
-      deliveryAddress: orderData.deliveryAddress,
-      paymentMethod: orderData.paymentMethod,
-      transactionId: orderData.transactionId,
-      paymentProof: orderData.paymentProof || null,
-      subtotal: orderData.subtotal,
-      deliveryFee: orderData.deliveryFee,
-      tax: orderData.tax,
-      total: orderData.total
+      Id: nextId++,
+      ...orderData,
+      status: 'pending',
+      orderDate: new Date().toISOString(),
+      estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      trackingNumber: `FM${Date.now()}${Math.floor(Math.random() * 1000)}`
     };
-    
-    // Log successful order creation for monitoring
-    console.log(`Order ${newId} created successfully:`, {
-      customerId: newOrder.customerId,
-      itemCount: newOrder.items.length,
-      total: newOrder.total,
-      timestamp: newOrder.createdAt
-    });
-    
+
+orders.push(newOrder);
     return { ...newOrder };
   },
 
-  async updateStatus(id, status) {
+  // Update order status
+  updateStatus: async (id, status) => {
     await delay(400);
-    const index = orderData.findIndex(o => o.Id === id);
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new Error('Invalid order ID');
+    }
+    
+    const index = orders.findIndex(o => o.Id === orderId);
     if (index === -1) {
       throw new Error("Order not found");
     }
     
     const updatedOrder = {
-      ...orderData[index],
+      ...orders[index],
       status,
       updatedAt: new Date().toISOString()
     };
     
+    orders[index] = updatedOrder;
     return { ...updatedOrder };
   },
 
-  async delete(id) {
+  // Delete order
+  delete: async (id) => {
     await delay(300);
-    const index = orderData.findIndex(o => o.Id === id);
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new Error('Invalid order ID');
+    }
+    
+    const index = orders.findIndex(o => o.Id === orderId);
     if (index === -1) {
       throw new Error("Order not found");
     }
+    
+    orders.splice(index, 1);
     return { success: true };
   }
 };
+
+export default orderService;

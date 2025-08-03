@@ -63,32 +63,35 @@ useEffect(() => {
     }
   }, [cart, navigate]);
 
-  // Enhanced cart validation with stock checking
+// Enhanced cart validation with stock checking - equivalent to backend validation
   const validateCartWithStock = async () => {
-    if (!cart || cart.length === 0) return false;
+    if (!cart || cart.length === 0) {
+      toast.error("Your cart is empty. Please add items before checkout.");
+      return false;
+    }
     
     try {
-      // Import products data for stock validation
-      const products = (await import('@/services/mockData/products.json')).default;
-      
-      for (const item of cart) {
-        const product = products.find(p => p.Id === item.Id);
-        if (!product) {
-          toast.error(`Product "${item.title}" is no longer available`);
-          return false;
-        }
-        if (!product.isActive) {
-          toast.error(`Product "${item.title}" is currently unavailable`);
-          return false;
-        }
-        if (product.stock < item.quantity) {
-          toast.error(`Only ${product.stock} units of "${item.title}" are available`);
-          return false;
-        }
-      }
+      // Use orderService validation (equivalent to backend route handler)
+      await orderService.validateCart(cart);
       return true;
     } catch (error) {
-      toast.error("Failed to validate cart. Please try again.");
+      console.error('Cart validation failed:', error);
+      
+      // Handle specific validation errors
+      if (error.message.includes('no longer available')) {
+        toast.error(error.message);
+      } else if (error.message.includes('currently unavailable')) {
+        toast.error(error.message);
+      } else if (error.message.includes('units of')) {
+        toast.error(error.message);
+      } else if (error.message.includes('Price mismatch')) {
+        toast.error(error.message);
+      } else if (error.message.includes('Invalid quantity')) {
+        toast.error(error.message);
+      } else {
+        toast.error("Cart validation failed. Please review your items and try again.");
+      }
+      
       return false;
     }
   };
