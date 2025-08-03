@@ -59,10 +59,11 @@ const [cart, setCart] = useState([]);
     setToastQueue(prev => [...prev, { type, message }]);
   }, []);
 const addToCart = useCallback(async (product, quantity = 1) => {
-    if (loading) return;
+    if (loading) return Promise.resolve();
     
-    setLoading(true);
-    try {
+    return new Promise((resolve) => {
+      setLoading(true);
+      
       const itemId = product.variantId || product.Id;
       const variantText = product.selectedVariant 
         ? ` (${product.selectedVariant.size || product.selectedVariant.weight || product.selectedVariant.color || product.selectedVariant.name})`
@@ -73,16 +74,20 @@ const addToCart = useCallback(async (product, quantity = 1) => {
           (item.variantId || item.Id) === itemId
         );
         
+        let updatedCart;
+        
         if (existingItem) {
           const newQuantity = existingItem.quantity + quantity;
           if (newQuantity > (product.stock || 99)) {
             queueToast('warning', `Only ${product.stock || 99} items available in stock`);
+            setLoading(false);
+            resolve();
             return prevCart;
           }
           
           queueToast('success', `Updated ${product.title}${variantText} quantity in cart`);
           
-          const updatedCart = prevCart.map(item =>
+          updatedCart = prevCart.map(item =>
             (item.variantId || item.Id) === itemId
               ? { 
                   ...item, 
@@ -91,41 +96,47 @@ const addToCart = useCallback(async (product, quantity = 1) => {
                 }
               : item
           );
-          
-          // Save to localStorage
-          localStorage.setItem('cart', JSON.stringify(updatedCart));
-          return updatedCart;
         } else {
           if (quantity > (product.stock || 99)) {
             queueToast('warning', `Only ${product.stock || 99} items available in stock`);
+            setLoading(false);
+            resolve();
             return prevCart;
           }
           
           queueToast('success', `${product.title}${variantText} added to cart`);
           
-          const newCart = [...prevCart, { 
+          updatedCart = [...prevCart, { 
             ...product, 
             quantity,
             variantId: itemId,
             displayName: `${product.title}${variantText}`,
             price: product.price
           }];
-          
-          // Save to localStorage
-          localStorage.setItem('cart', JSON.stringify(newCart));
-          return newCart;
         }
+        
+        // Single localStorage write after state update
+        requestAnimationFrame(() => {
+          try {
+            localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
+          } catch (error) {
+            console.error('Error saving cart:', error);
+          }
+          setLoading(false);
+          resolve();
+        });
+        
+        return updatedCart;
       });
-    } finally {
-      setLoading(false);
-    }
+    });
   }, [queueToast, loading]);
 
 const removeFromCart = useCallback(async (productId) => {
-    if (loading) return;
+    if (loading) return Promise.resolve();
     
-    setLoading(true);
-    try {
+    return new Promise((resolve) => {
+      setLoading(true);
+      
       setCart(prevCart => {
         const item = prevCart.find(item => (item.variantId || item.Id) === productId);
         if (item) {
@@ -134,25 +145,32 @@ const removeFromCart = useCallback(async (productId) => {
         
         const updatedCart = prevCart.filter(item => (item.variantId || item.Id) !== productId);
         
-        // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        // Deferred localStorage write
+        requestAnimationFrame(() => {
+          try {
+            localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
+          } catch (error) {
+            console.error('Error saving cart:', error);
+          }
+          setLoading(false);
+          resolve();
+        });
+        
         return updatedCart;
       });
-    } finally {
-      setLoading(false);
-    }
+    });
   }, [queueToast, loading]);
 
 const updateQuantity = useCallback(async (productId, newQuantity) => {
-    if (loading) return;
+    if (loading) return Promise.resolve();
     
     if (newQuantity <= 0) {
-      await removeFromCart(productId);
-      return;
+      return removeFromCart(productId);
     }
 
-    setLoading(true);
-    try {
+    return new Promise((resolve) => {
+      setLoading(true);
+      
       setCart(prevCart => {
         const updatedCart = prevCart.map(item => {
           const itemId = item.variantId || item.Id;
@@ -167,30 +185,46 @@ const updateQuantity = useCallback(async (productId, newQuantity) => {
           return item;
         });
         
-        // Save to localStorage
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        // Deferred localStorage write
+        requestAnimationFrame(() => {
+          try {
+            localStorage.setItem('freshmart-cart', JSON.stringify(updatedCart));
+          } catch (error) {
+            console.error('Error saving cart:', error);
+          }
+          setLoading(false);
+          resolve();
+        });
+        
         return updatedCart;
       });
-    } finally {
-      setLoading(false);
-    }
+    });
   }, [removeFromCart, queueToast, loading]);
 const clearCart = useCallback(async (skipConfirmation = false) => {
-    if (loading) return;
+    if (loading) return Promise.resolve();
     
     if (!skipConfirmation && cart.length > 0) {
       const confirmed = window.confirm('Are you sure you want to clear your cart? This action cannot be undone.');
-      if (!confirmed) return;
+      if (!confirmed) return Promise.resolve();
     }
 
-    setLoading(true);
-    try {
+    return new Promise((resolve) => {
+      setLoading(true);
+      
       setCart([]);
-      localStorage.removeItem('cart');
-      queueToast('success', "Cart cleared");
-    } finally {
-      setLoading(false);
-    }
+      
+      // Deferred localStorage cleanup
+      requestAnimationFrame(() => {
+        try {
+          localStorage.removeItem('freshmart-cart');
+          queueToast('success', "Cart cleared");
+        } catch (error) {
+          console.error('Error clearing cart:', error);
+        }
+        setLoading(false);
+        resolve();
+      });
+    });
   }, [queueToast, loading, cart.length]);
 
   const getTotalItems = () => {

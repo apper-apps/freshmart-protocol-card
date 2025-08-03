@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-toastify';
-import Card from '@/components/atoms/Card';
-import Button from '@/components/atoms/Button';
-import Input from '@/components/atoms/Input';
-import Badge from '@/components/atoms/Badge';
-import Loading from '@/components/ui/Loading';
-import Error from '@/components/ui/Error';
-import ApperIcon from '@/components/ApperIcon';
-import { productService } from '@/services/api/productService';
-import { orderService } from '@/services/api/orderService';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-toastify";
+import { orderService } from "@/services/api/orderService";
+import { productService } from "@/services/api/productService";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import Error from "@/components/ui/Error";
+import Checkout from "@/components/pages/Checkout";
+import Cart from "@/components/pages/Cart";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
 
 const POSCheckout = () => {
   const [cart, setCart] = useState([]);
@@ -194,38 +196,48 @@ const loadProducts = async () => {
     return null;
   };
 
-const handleBarcodeDetected = async (detectedBarcode) => {
+const handleBarcodeDetected = useCallback(async (detectedBarcode) => {
+    if (isScanning || loading) return;
+    
     try {
       setIsScanning(true);
       const product = await productService.getByBarcode(detectedBarcode);
-      // Defer addToCart to prevent setState-in-render warning
-      setTimeout(() => addToCart(product), 0);
-      stopScanner();
-      setBarcode('');
+      
+      // Use proper async cart operation
+      if (product) {
+        await addToCart(product);
+        stopScanner();
+        setBarcode('');
+        toast.success(`${product.title} added to cart`);
+      }
     } catch (err) {
       toast.error('Product not found for barcode: ' + detectedBarcode);
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [isScanning, loading, addToCart]);
 
-  // Manual barcode input
-  const handleBarcodeSubmit = async (e) => {
+// Manual barcode input
+  const handleBarcodeSubmit = useCallback(async (e) => {
     e.preventDefault();
     
+    if (!barcode.trim() || isScanning || loading) return;
     
     try {
       setIsScanning(true);
       const product = await productService.getByBarcode(barcode);
-      // Defer addToCart to prevent setState-in-render warning
-      setTimeout(() => addToCart(product), 0);
-      setBarcode('');
+      
+      if (product) {
+        await addToCart(product);
+        setBarcode('');
+        toast.success(`${product.title} added to cart`);
+      }
     } catch (err) {
       toast.error('Product not found for barcode: ' + barcode);
     } finally {
       setIsScanning(false);
     }
-  };
+  }, [barcode, isScanning, loading, addToCart]);
 
   // Product search
   const handleSearch = async (query) => {
@@ -314,11 +326,13 @@ const handleBarcodeDetected = async (detectedBarcode) => {
   const total = subtotal + tax;
 
   // Process sale
-  const processSale = async () => {
+const processSale = useCallback(async () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
       return;
     }
+    
+    if (loading) return; // Prevent concurrent operations
     
     try {
       setLoading(true);
@@ -344,29 +358,32 @@ const handleBarcodeDetected = async (detectedBarcode) => {
       const order = await orderService.create(orderData);
       
       // Update stock for each item
-      for (const item of cart) {
+      const stockUpdates = cart.map(async (item) => {
         const newStock = item.stock - item.quantity;
-        await productService.updateStock(item.Id, newStock);
-      }
+        return productService.updateStock(item.Id, newStock);
+      });
+      
+      await Promise.all(stockUpdates);
       
       toast.success(`Sale completed! Order #${order.Id}`);
       
-      // Reset form
+      // Reset form state in batch
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
       setPaymentMethod('cash');
       
       // Reload products to update stock
-      loadProducts();
+      await loadProducts();
       
     } catch (err) {
       toast.error('Sale processing failed');
       console.error('Sale error:', err);
     } finally {
       setLoading(false);
+} finally {
+      setLoading(false);
     }
-  };
 
   if (loading && products.length === 0) {
     return <Loading />;
