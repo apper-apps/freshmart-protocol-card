@@ -376,15 +376,20 @@ const processSale = useCallback(async () => {
       // Reload products to update stock
       await loadProducts();
       
-    } catch (err) {
+} catch (err) {
       toast.error('Sale processing failed');
       console.error('Sale error:', err);
     } finally {
       setLoading(false);
-} finally {
-      setLoading(false);
     }
+  }, [cart, customerName, customerPhone, subtotal, tax, total, paymentMethod, loading, loadProducts]);
 
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      stopScanner();
+    };
+  }, []);
   if (loading && products.length === 0) {
     return <Loading />;
   }
