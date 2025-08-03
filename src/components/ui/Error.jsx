@@ -5,7 +5,10 @@ import Button from "@/components/atoms/Button";
 const Error = ({ 
   message = "Something went wrong. Please try again.", 
   onRetry,
-  showRetry = true 
+  showRetry = true,
+  type = "general", // "general", "checkout", "cart"
+  fallbackAction,
+  fallbackLabel = "Go Back"
 }) => {
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center">
@@ -21,12 +24,36 @@ const Error = ({
         {message}
       </p>
       
-      {showRetry && onRetry && (
-        <Button onClick={onRetry} className="px-6">
-          <ApperIcon name="RefreshCw" size={16} className="mr-2" />
-          Try Again
-        </Button>
-      )}
+<div className="flex flex-col sm:flex-row gap-3 items-center">
+        {showRetry && onRetry && (
+          <Button onClick={onRetry} className="px-6">
+            <ApperIcon name="RefreshCw" size={16} className="mr-2" />
+            Try Again
+          </Button>
+        )}
+        
+        {fallbackAction && (
+          <Button 
+            variant="outline" 
+            onClick={fallbackAction} 
+            className="px-6"
+          >
+            <ApperIcon name="ArrowLeft" size={16} className="mr-2" />
+            {fallbackLabel}
+          </Button>
+        )}
+        
+        {type === "checkout" && !fallbackAction && (
+          <Button 
+            variant="outline" 
+            onClick={() => window.history.back()} 
+            className="px-6"
+          >
+            <ApperIcon name="ShoppingCart" size={16} className="mr-2" />
+            Return to Cart
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

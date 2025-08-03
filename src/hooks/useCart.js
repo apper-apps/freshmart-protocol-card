@@ -210,7 +210,23 @@ const isInCart = useCallback((productId) => {
   }, [cart]);
 
   const getCartItem = useCallback((productId) => {
-    return cart.find(item => (item.variantId || item.Id) === productId);
+return cart.find(item => (item.variantId || item.Id) === productId);
+  }, [cart]);
+
+  const validateCart = useCallback(() => {
+    if (cart.length === 0) return false;
+    
+    // Check if all items have sufficient stock
+    return cart.every(item => hasStock(item.Id, item.quantity));
+  }, [cart]);
+
+  const hasStock = useCallback((productId, requestedQuantity = 1) => {
+    // This would typically check against actual inventory
+    // For now, assume items are in stock unless quantity > 10
+    const cartItem = cart.find(item => (item.variantId || item.Id) === productId);
+    if (!cartItem) return true;
+    
+    return requestedQuantity <= 10; // Mock stock limit
   }, [cart]);
 
 return {
@@ -219,10 +235,12 @@ return {
     removeFromCart,
     updateQuantity,
     clearCart,
-    getTotalItems,
+getTotalItems,
     getSubtotal,
     isInCart,
     getCartItem,
+    validateCart,
+    hasStock,
     isInitialized,
     loading
   };
